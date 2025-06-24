@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -6,7 +6,58 @@ import { Label } from '../ui/Label';
 import { GoogleIcon } from '../ui/GoogleIcon';
 import { FacebookIcon } from '../ui/FacebookIcon';
 
+// Import Firebase auth functions and providers
+import {
+    auth,
+    signInWithEmailAndPassword,
+    signInWithPopup,
+    googleProvider,
+    facebookProvider,
+} from '../../firebase'; // Adjust path if firebase.js is in a different location
+
+
 const LoginModal = ({ onClose, onLogin }) => {
+
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState(null);
+    const [isLoading, setIsLoading] = useState(false); // To disable buttons during login
+
+    const handleEmailLogin = async (e) => {
+        e.preventDefault();
+        setError(null);
+        setIsLoading(true);
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            onLogin(userCredential.user); // Pass the user object to the parent component
+        } catch (err) {
+            console.error("Email login error:", err);
+            setError(err.message || "Failed to sign in with email. Please check your credentials.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSocialLogin = async (provider) => {
+        setError(null);
+        setIsLoading(true);
+        try {
+            const userCredential = await signInWithPopup(auth, provider);
+            onLogin(userCredential.user); // Pass the user object to the parent component
+        } catch (err) {
+            console.error("Social login error:", err);
+            // Firebase specific error handling for social logins
+            if (err.code === 'auth/account-exists-with-different-credential') {
+                setError('An account with this email already exists using a different sign-in method.');
+            } else {
+                setError(err.message || "Failed to sign in with social account.");
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center p-4 z-50">
             <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-sm relative">
@@ -14,41 +65,62 @@ const LoginModal = ({ onClose, onLogin }) => {
                     <X className="h-6 w-6" />
                 </button>
                 <div className="text-center">
-                     <h2 className="text-2xl font-bold text-slate-900">Welcome back!</h2>
-                     <p className="text-slate-500 mt-1 mb-6">Sign in to continue.</p>
+                    <h2 className="text-2xl font-bold text-slate-900">Welcome back!</h2>
+                    <p className="text-slate-500 mt-1 mb-6">Sign in to continue.</p>
                 </div>
-                
+
+                {error && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        <strong className="font-bold">Error: </strong>
+                        <span className="block sm:inline">{error}</span>
+                    </div>
+                )}
+
                 <div className="space-y-3">
-                    <Button onClick={onLogin} variant="social" className="w-full">
-                        <GoogleIcon /> Continue with Google
+                    <Button onClick={() => handleSocialLogin(googleProvider)} variant="social" className="w-full" disabled={isLoading}>
+                        <GoogleIcon /> {isLoading ? 'Signing in...' : 'Continue with Google'}
                     </Button>
-                     <Button onClick={onLogin} variant="social" className="w-full">
-                        <FacebookIcon /> Continue with Facebook
+                    <Button onClick={() => handleSocialLogin(facebookProvider)} variant="social" className="w-full" disabled={isLoading}>
+                        <FacebookIcon /> {isLoading ? 'Signing in...' : 'Continue with Facebook'}
                     </Button>
                 </div>
 
                 <div className="flex items-center my-6">
-                    <hr className="flex-grow border-slate-200"/>
+                    <hr className="flex-grow border-slate-200" />
                     <span className="mx-4 text-xs font-medium text-slate-400">OR</span>
-                    <hr className="flex-grow border-slate-200"/>
+                    <hr className="flex-grow border-slate-200" />
                 </div>
 
-                <form onSubmit={(e) => { e.preventDefault(); onLogin(); }} className="space-y-4">
+                <form onSubmit={handleEmailLogin} className="space-y-4">
                     <div>
                         <Label htmlFor="email">Email Address</Label>
-                        <Input id="email" type="email" placeholder="you@example.com" />
+                        <Input
+                            id="email"
+                            type="email"
+                            placeholder="you@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            disabled={isLoading}
+                        />
                     </div>
                     <div>
-                         <Label htmlFor="password">Password</Label>
-                        <Input id="password" type="password" placeholder="••••••••" />
+                        <Label htmlFor="password">Password</Label>
+                        <Input
+                            id="password"
+                            type="password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            disabled={isLoading}
+                        />
                     </div>
-                     <Button type="submit" className="w-full mt-2">
-                        Continue with Email
+                    <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+                        {isLoading ? 'Signing in...' : 'Continue with Email'}
                     </Button>
                 </form>
 
                 <p className="text-center text-sm text-slate-500 mt-6">
-                    Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); alert("Sign-up UI not implemented yet.");}} className="font-semibold text-indigo-600 hover:text-indigo-500">Sign Up</a>
+                    Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); alert("Sign-up UI not implemented yet."); }} className="font-semibold text-indigo-600 hover:text-indigo-500">Sign Up</a>
                 </p>
             </div>
         </div>
