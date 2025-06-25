@@ -78,4 +78,4 @@ const CreateComparisonForm = ({ onSubmit, onCancel }) => {
     );
 };
 
-export default CreateComparisonForm;
+export { CreateComparisonForm };

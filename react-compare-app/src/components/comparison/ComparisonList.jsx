@@ -47,4 +47,4 @@ const ComparisonList = ({ comparisons, onCreate, onView }) => {
     );
 };
 
-export default ComparisonList;
+export { ComparisonList };

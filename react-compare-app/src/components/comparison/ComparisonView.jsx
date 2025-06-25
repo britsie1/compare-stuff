@@ -147,4 +147,4 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
     );
 };
 
-export default ComparisonView;
+export { ComparisonView };

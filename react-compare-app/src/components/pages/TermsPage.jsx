@@ -33,4 +33,4 @@ const TermsPage = ({ onBack }) => (
     </div>
 );
 
-export default TermsPage;
+export { TermsPage };
