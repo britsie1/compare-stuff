@@ -35,7 +35,7 @@ const Navbar = ({ user, onLoginClick, logout, navigate }) => {
                             <path d="M8 5.25l4 2.25l4 -2.25" />
                             <path d="M8 18.75l4 -2.25l4 2.25" />
                         </svg>
-                        <span className="ml-2 text-xl font-bold text-slate-800">CompareIt</span>
+                        <span className="ml-2 text-xl font-bold text-slate-800">CompareStuff</span>
                     </div>
 
                     {/* User Menu */}
