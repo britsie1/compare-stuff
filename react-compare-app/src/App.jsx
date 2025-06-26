@@ -10,15 +10,16 @@ import { EditComparisonForm } from './components/comparison/EditComparisonForm';
 import { TermsPage } from './components/pages/TermsPage';
 import { LoginModal } from './components/auth/LoginModal';
 import { SignUpModal } from './components/auth/SignUpModal';
+import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
 // Main App Component
 const App = () => {
-    const [page, setPage] = useState('list'); // 'list', 'create', 'view', 'editTemplate', 'terms'
     const [comparisons, setComparisons] = useState([]);
-    const [selectedComparisonId, setSelectedComparisonId] = useState(null);
     const { user, loading, logout } = useFirebaseAuth();
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         // Load initial data
@@ -43,18 +44,13 @@ const App = () => {
     const handleCreateComparison = (newComparison) => {
       const fullComparison = {
             ...newComparison,
-            id: Date.now(),
+            id: uuidv4(),
             items: [],
             favorites: 0,
             lastUpdated: new Date().toISOString(),
         };
         setComparisons([...comparisons, fullComparison]);
-        setPage('list');
-    };
-
-    const handleViewComparison = (id) => {
-        setSelectedComparisonId(id);
-        setPage('view');
+        navigate(`/compare/${fullComparison.id}`);
     };
 
     const handleUpdateComparison = (updatedComparison) => {
@@ -62,14 +58,6 @@ const App = () => {
             c.id === updatedComparison.id ? { ...c, ...updatedComparison, lastUpdated: new Date().toISOString() } : c
         );
         setComparisons(newComparisons);
-        setPage('view'); // Go back to view after updating
-    };
-
-    const navigate = (newPage, comparisonId = null) => {
-        setPage(newPage);
-        if (comparisonId !== null) {
-            setSelectedComparisonId(comparisonId);
-        }
     };
 
     if (loading) {
@@ -80,29 +68,36 @@ const App = () => {
         );
     }
 
-    const selectedComparison = comparisons.find(c => c.id === selectedComparisonId);
-
-    const renderPage = () => {
-        switch (page) {
-            case 'create':
-                return <CreateComparisonForm onSubmit={handleCreateComparison} onCancel={() => setPage('list')} />;
-            case 'view':
-                return selectedComparison && <ComparisonView comparison={selectedComparison} onUpdate={handleUpdateComparison} onBack={() => setPage('list')} onEditTemplate={() => setPage('editTemplate')} />;
-            case 'editTemplate':
-                return selectedComparison && <EditComparisonForm comparison={selectedComparison} onSubmit={handleUpdateComparison} onCancel={() => setPage('view')} />;
-            case 'terms':
-                return <TermsPage onBack={() => setPage('list')} />;
-            case 'list':
-            default:
-                return <ComparisonList comparisons={comparisons} onCreate={() => setPage('create')} onView={handleViewComparison} />;
+    // Helper to get comparison by ID from URL param
+    const ComparisonViewWrapper = () => {
+        const { id } = useParams();
+        const comparison = comparisons.find(c => c.id === id);
+        if (!comparison) {
+            return <div className="text-center p-12 text-slate-500">Comparison not found.</div>;
         }
+        return <ComparisonView comparison={comparison} onUpdate={handleUpdateComparison} onBack={() => navigate('/')} onEditTemplate={() => navigate(`/compare/${id}/edit`)} />;
+    };
+
+    const EditComparisonFormWrapper = () => {
+        const { id } = useParams();
+        const comparison = comparisons.find(c => c.id === id);
+        if (!comparison) {
+            return <div className="text-center p-12 text-slate-500">Comparison not found.</div>;
+        }
+        return <EditComparisonForm comparison={comparison} onSubmit={handleUpdateComparison} onCancel={() => navigate(`/compare/${id}`)} />;
     };
 
     return (
         <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col">
             <Navbar user={user} onLoginClick={() => setIsLoginModalOpen(true)} logout={handleLogout} navigate={navigate} />
             <main className="p-4 md:p-8 flex-grow">
-            {renderPage()}
+                <Routes>
+                    <Route path="/" element={<ComparisonList comparisons={comparisons} onCreate={() => navigate('/create')} onView={id => navigate(`/compare/${id}`)} />} />
+                    <Route path="/create" element={<CreateComparisonForm onSubmit={handleCreateComparison} onCancel={() => navigate('/')} />} />
+                    <Route path="/compare/:id" element={<ComparisonViewWrapper />} />
+                    <Route path="/compare/:id/edit" element={<EditComparisonFormWrapper />} />
+                    <Route path="/terms" element={<TermsPage onBack={() => navigate('/')} />} />
+                </Routes>
             </main>
             {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} onShowSignUp={() => { setIsLoginModalOpen(false); setIsSignUpModalOpen(true); }} />}
             {isSignUpModalOpen && <SignUpModal onClose={() => setIsSignUpModalOpen(false)} />}

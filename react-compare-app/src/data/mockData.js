@@ -1,6 +1,8 @@
+import { v4 as uuidv4 } from 'uuid';
+
 export const initialData = [
     {
-        id: 1,
+        id: uuidv4(),
         title: 'Medical Aid Schemes 2024',
         description: 'A detailed comparison of popular medical aid schemes in South Africa for young professionals.',
         imageUrl: 'https://placehold.co/600x300/6366f1/ffffff?text=Medical+Aids',
@@ -14,7 +16,7 @@ export const initialData = [
         lastUpdated: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(),
     },
     {
-        id: 2,
+        id: uuidv4(),
         title: 'Smartphones under R10k',
         description: 'Finding the best value-for-money smartphone without breaking the bank. Focus on camera and battery.',
         imageUrl: 'https://placehold.co/600x300/ec4899/ffffff?text=Smartphones',
