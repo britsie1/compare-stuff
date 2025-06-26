@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useFirebaseAuth } from './hooks/useFirebaseAuth';
-import { initialData } from './data/mockData';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { ComparisonList } from './components/comparison/ComparisonList';
@@ -12,6 +11,7 @@ import { LoginModal } from './components/auth/LoginModal';
 import { SignUpModal } from './components/auth/SignUpModal';
 import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
+import { getTemplates, getTemplate } from './firebase';
 
 // Main App Component
 const App = () => {
@@ -22,8 +22,16 @@ const App = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Load initial data
-        setComparisons(initialData);
+        // Fetch first 10 templates from Firestore
+        const fetchTemplates = async () => {
+            try {
+                const { templates } = await getTemplates(10);
+                setComparisons(templates);
+            } catch (error) {
+                console.error('Failed to fetch templates:', error);
+            }
+        };
+        fetchTemplates();
     }, []);
 
     useEffect(() => {
@@ -71,7 +79,30 @@ const App = () => {
     // Helper to get comparison by ID from URL param
     const ComparisonViewWrapper = () => {
         const { id } = useParams();
-        const comparison = comparisons.find(c => c.id === id);
+        const [comparison, setComparison] = React.useState(null);
+        const [loading, setLoading] = React.useState(true);
+        const [error, setError] = React.useState(null);
+
+        React.useEffect(() => {
+            setLoading(true);
+            setError(null);
+            getTemplate(id)
+                .then((data) => {
+                    setComparison(data);
+                    setLoading(false);
+                })
+                .catch((err) => {
+                    setError(err.message);
+                    setLoading(false);
+                });
+        }, [id]);
+
+        if (loading) {
+            return <div className="text-center p-12 text-slate-500">Loading...</div>;
+        }
+        if (error) {
+            return <div className="text-center p-12 text-slate-500">{error}</div>;
+        }
         if (!comparison) {
             return <div className="text-center p-12 text-slate-500">Comparison not found.</div>;
         }

@@ -3,6 +3,7 @@ import { Plus, X } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
+import { createTemplate } from '../../firebase';
 
 const CreateComparisonForm = ({ onSubmit, onCancel }) => {
     const [title, setTitle] = useState('');
@@ -26,11 +27,17 @@ const CreateComparisonForm = ({ onSubmit, onCancel }) => {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const finalFields = fields.map(f => f.trim()).filter(f => f !== '');
         if (title.trim() && finalFields.length > 0) {
-            onSubmit({ title, imageUrl, description, templateFields: finalFields });
+            const templateData = { title, imageUrl, description, templateFields: finalFields };
+            try {
+                await createTemplate(templateData);
+                if (onSubmit) onSubmit(templateData);
+            } catch (error) {
+                alert('Failed to create template: ' + error.message);
+            }
         } else {
             alert('Please provide a title and at least one field.');
         }

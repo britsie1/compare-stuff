@@ -1,14 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, CheckSquare, Square, Search, Edit, Edit3 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import ItemFormModal from './ItemFormModal';
+import { getTemplateItems } from '../../firebase';
 
 const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [itemToEdit, setItemToEdit] = useState(null);
     const [selectedItemIds, setSelectedItemIds] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
+    const [items, setItems] = useState([]); // Items from Firestore
+    const templateId = comparison.id || comparison.templateId;
+
+    useEffect(() => {
+        if (templateId) {
+            getTemplateItems(templateId)
+                .then(fetchedItems => setItems(fetchedItems))
+                .catch(err => {
+                    setItems([]);
+                    console.error('Failed to fetch template items:', err);
+                });
+        }
+    }, [templateId]);
 
     const handleToggleItem = (itemId) => {
         setSelectedItemIds(prevSelected =>
@@ -19,7 +33,7 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
     };
 
     const handleItemUpdate = (updatedItem) => {
-        const newItems = comparison.items.map(item => 
+        const newItems = items.map(item => 
             item.id === updatedItem.id ? updatedItem : item
         );
         const updatedComparison = {
@@ -38,16 +52,16 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
         };
         const updatedComparison = {
             ...comparison,
-            items: [...comparison.items, newItem],
+            items: [...items, newItem],
         };
         onUpdate(updatedComparison);
         setSelectedItemIds(prev => [...prev, newItem.id]);
         setIsAddModalOpen(false);
     };
     
-    const itemsToDisplay = comparison.items.filter(item => selectedItemIds.includes(item.id));
+    const itemsToDisplay = items.filter(item => selectedItemIds.includes(item.id));
     
-    const filteredItems = comparison.items.filter(item => 
+    const filteredItems = items.filter(item => 
         item.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -124,14 +138,24 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {comparison.templateFields.map((field, fieldIndex) => (
-                                <tr key={fieldIndex} className="border-t border-slate-200">
-                                    <td className="p-4 font-semibold text-slate-600 sticky left-0 bg-white">{field}</td>
-                                    {itemsToDisplay.map(item => (
-                                        <td key={item.id} className="p-4 text-center text-slate-800">{item.values[fieldIndex] || '-'}</td>
-                                    ))}
-                                </tr>
-                            ))}
+                            {comparison.templateFields.map((field, fieldIndex) => {
+                                const fieldId = typeof field === 'object' ? field.id : fieldIndex;
+                                const fieldLabel = typeof field === 'object' ? field.label : field;
+                                return (
+                                    <tr key={fieldId} className="border-t border-slate-200">
+                                        <td className="p-4 font-semibold text-slate-600 sticky left-0 bg-white">{fieldLabel}</td>
+                                        {itemsToDisplay.map(item => {
+                                            // Find value by field id
+                                            const valueObj = Array.isArray(item.values)
+                                                ? item.values.find(v => v.id === fieldId)
+                                                : null;
+                                            return (
+                                                <td key={item.id} className="p-4 text-center text-slate-800">{valueObj ? valueObj.value : '-'}</td>
+                                            );
+                                        })}
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 ) : (
@@ -141,7 +165,7 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                 )}
             </div>
 
-            {isAddModalOpen && <ItemFormModal fields={comparison.templateFields} onClose={() => setIsAddModalOpen(false)} onSave={handleAddItem} modalTitle="Add New Item to Compare" saveButtonText="Save Item" />}
+            {isAddModalOpen && <ItemFormModal fields={comparison.templateFields} onClose={() => setIsAddModalOpen(false)} onSave={handleAddItem} modalTitle="Add New Item to Compare" saveButtonText="Save Item" templateId={comparison.id || comparison.templateId} />}
             {itemToEdit && <ItemFormModal item={itemToEdit} fields={comparison.templateFields} onClose={() => setItemToEdit(null)} onSave={handleItemUpdate} modalTitle="Edit Item" saveButtonText="Save Changes" />}
         </div>
     );
