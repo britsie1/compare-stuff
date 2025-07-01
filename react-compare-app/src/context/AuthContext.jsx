@@ -1,11 +1,15 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../firebase';
+import { auth } from '../services/auth'; // Adjust path if auth.js is in a different location
 
 const AuthContext = React.createContext();
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }
 
 export function AuthProvider({ children }) {
@@ -34,3 +38,5 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>
   );
 }
+
+export { AuthContext };

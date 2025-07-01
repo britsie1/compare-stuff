@@ -1,9 +1,13 @@
 import React from 'react';
-import { Plus, Heart, Clock } from 'lucide-react';
+import { Plus, Clock } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { timeAgo } from '../../utils/time';
+import FavoriteButton from '../ui/FavoriteButton';
+import { LoginModal } from '../auth/LoginModal';
 
 const ComparisonList = ({ comparisons, onCreate, onView }) => {
+    const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
+
     return (
     <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
@@ -12,6 +16,9 @@ const ComparisonList = ({ comparisons, onCreate, onView }) => {
                 <Plus className="mr-2 h-4 w-4" /> Create New
             </Button>
         </div>
+        {isLoginModalOpen && (
+            <LoginModal onClose={() => setIsLoginModalOpen(false)} />
+        )}
         {comparisons.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {comparisons.map(comp => (
@@ -21,11 +28,8 @@ const ComparisonList = ({ comparisons, onCreate, onView }) => {
                             <h2 className="text-xl font-bold text-slate-800 mb-2">{comp.title}</h2>
                             <p className="text-slate-600 text-sm mb-4 flex-grow">{comp.description}</p>
                             <div className="flex justify-between items-center text-sm text-slate-500 mt-auto pt-4 border-t border-slate-100">
+                                <FavoriteButton templateId={comp.id} favorites={comp.favorites} onLoginRequest={() => setIsLoginModalOpen(true)} />
                                 <div className="flex items-center">
-                                    <Heart className="w-4 h-4 mr-1.5 text-red-500" />
-                                    <span>{comp.favorites}</span>
-                                </div>
-                                 <div className="flex items-center">
                                     <Clock className="w-4 h-4 mr-1.5" />
                                     <span>Updated {timeAgo(comp.lastUpdated)}</span>
                                 </div>

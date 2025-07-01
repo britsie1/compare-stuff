@@ -9,7 +9,7 @@ import {
     signInWithPopup,
     googleProvider,
     facebookProvider,
-} from '../../firebase'; // Adjust path if firebase.js is in a different location
+} from '../../services/auth'; // Adjust path if firebase.js is in a different location
 import { Label } from '../ui/Label';
 import { Input } from '../ui/Input';
 

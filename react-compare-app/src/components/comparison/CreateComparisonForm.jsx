@@ -3,7 +3,7 @@ import { Plus, X } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
-import { createTemplate } from '../../firebase';
+import { createTemplate } from '../../services/templates';
 
 const CreateComparisonForm = ({ onSubmit, onCancel }) => {
     const [title, setTitle] = useState('');

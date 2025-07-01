@@ -11,7 +11,8 @@ import { LoginModal } from './components/auth/LoginModal';
 import { SignUpModal } from './components/auth/SignUpModal';
 import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
-import { getTemplates, getTemplate } from './firebase';
+import { getTemplates, getTemplate } from './services/templates'
+import { AuthProvider } from './context/AuthContext';
 
 // Main App Component
 const App = () => {
@@ -119,21 +120,23 @@ const App = () => {
     };
 
     return (
-        <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col">
-            <Navbar user={user} onLoginClick={() => setIsLoginModalOpen(true)} logout={handleLogout} navigate={navigate} />
-            <main className="p-4 md:p-8 flex-grow">
-                <Routes>
-                    <Route path="/" element={<ComparisonList comparisons={comparisons} onCreate={() => navigate('/create')} onView={id => navigate(`/compare/${id}`)} />} />
-                    <Route path="/create" element={<CreateComparisonForm onSubmit={handleCreateComparison} onCancel={() => navigate('/')} />} />
-                    <Route path="/compare/:id" element={<ComparisonViewWrapper />} />
-                    <Route path="/compare/:id/edit" element={<EditComparisonFormWrapper />} />
-                    <Route path="/terms" element={<TermsPage onBack={() => navigate('/')} />} />
-                </Routes>
-            </main>
-            {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} onShowSignUp={() => { setIsLoginModalOpen(false); setIsSignUpModalOpen(true); }} />}
-            {isSignUpModalOpen && <SignUpModal onClose={() => setIsSignUpModalOpen(false)} />}
-            <Footer navigate={navigate} />
-        </div>
+        <AuthProvider>
+            <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col">
+                <Navbar user={user} onLoginClick={() => setIsLoginModalOpen(true)} logout={handleLogout} navigate={navigate} />
+                <main className="p-4 md:p-8 flex-grow">
+                    <Routes>
+                        <Route path="/" element={<ComparisonList comparisons={comparisons} onCreate={() => navigate('/create')} onView={id => navigate(`/compare/${id}`)} />} />
+                        <Route path="/create" element={<CreateComparisonForm onSubmit={handleCreateComparison} onCancel={() => navigate('/')} />} />
+                        <Route path="/compare/:id" element={<ComparisonViewWrapper />} />
+                        <Route path="/compare/:id/edit" element={<EditComparisonFormWrapper />} />
+                        <Route path="/terms" element={<TermsPage onBack={() => navigate('/')} />} />
+                    </Routes>
+                </main>
+                {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} onShowSignUp={() => { setIsLoginModalOpen(false); setIsSignUpModalOpen(true); }} />}
+                {isSignUpModalOpen && <SignUpModal onClose={() => setIsSignUpModalOpen(false)} />}
+                <Footer navigate={navigate} />
+            </div>
+        </AuthProvider>
     );
 };
 

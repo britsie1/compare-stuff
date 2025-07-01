@@ -3,7 +3,7 @@ import { Plus, CheckSquare, Square, Search, Edit, Edit3 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import ItemFormModal from './ItemFormModal';
-import { getTemplateItems } from '../../firebase';
+import { getTemplateItems } from '../../services/templates';
 
 const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);

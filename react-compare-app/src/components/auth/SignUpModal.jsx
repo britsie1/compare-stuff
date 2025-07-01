@@ -10,7 +10,7 @@ import {
     signInWithPopup,
     googleProvider,
     facebookProvider,
-} from '../../firebase';
+} from '../../services/auth';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import ReCAPTCHA from 'react-google-recaptcha';
 

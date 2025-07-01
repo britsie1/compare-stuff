@@ -3,7 +3,7 @@ import { Plus, X } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
-import { deleteTemplate, updateTemplate } from '../../firebase';
+import { deleteTemplate, updateTemplate } from '../../services/templates';
 import { v4 as uuidv4 } from 'uuid';
 
 const EditComparisonForm = ({ comparison, onCancel }) => {
