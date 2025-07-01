@@ -9,7 +9,7 @@ import { EditComparisonForm } from './components/comparison/EditComparisonForm';
 import { TermsPage } from './components/pages/TermsPage';
 import { LoginModal } from './components/auth/LoginModal';
 import { SignUpModal } from './components/auth/SignUpModal';
-import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
+import { Routes, Route, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { getTemplates, getTemplate } from './services/templates'
 import { AuthProvider } from './context/AuthContext';
@@ -21,19 +21,28 @@ const App = () => {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Fetch templates (used in both initial load and on navigation back to list)
+    const fetchTemplates = async () => {
+        try {
+            const { templates } = await getTemplates(10);
+            setComparisons(templates);
+        } catch (error) {
+            console.error('Failed to fetch templates:', error);
+        }
+    };
 
     useEffect(() => {
-        // Fetch first 10 templates from Firestore
-        const fetchTemplates = async () => {
-            try {
-                const { templates } = await getTemplates(10);
-                setComparisons(templates);
-            } catch (error) {
-                console.error('Failed to fetch templates:', error);
-            }
-        };
         fetchTemplates();
     }, []);
+
+    // Refetch templates when navigating back to the list view
+    useEffect(() => {
+        if (location.pathname === '/') {
+            fetchTemplates();
+        }
+    }, [location.pathname]);
 
     useEffect(() => {
         if (user && isLoginModalOpen) {
@@ -84,6 +93,7 @@ const App = () => {
         const [loading, setLoading] = React.useState(true);
         const [error, setError] = React.useState(null);
 
+        // Refetch templates on back navigation from CompareView
         React.useEffect(() => {
             setLoading(true);
             setError(null);

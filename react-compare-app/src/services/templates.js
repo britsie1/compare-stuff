@@ -1,27 +1,33 @@
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, query, orderBy, limit, startAfter } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, query, orderBy, limit, startAfter, increment } from 'firebase/firestore';
 import { app } from '../firebase';
 
 // Initialize Firestore
 const db = getFirestore(app);
 
 // Function to create a template
+// NOTE: Make sure you pass the user object as the second argument when calling this function!
 export const createTemplate = async (templateData, user) => {
     try {
         const now = new Date().toISOString();
+        // Debug: log user object
+        if (!user || !user.id) {
+            console.error('createTemplate: user object received:', user);
+            throw new Error('You must be logged in to create a template.');
+        }
         const template = {
             ...templateData,
             lastUpdated: now,
-            creator: user ? {
-                uid: user.uid,
-                displayName: user.displayName || '',
+            creator: {
+                uid: user.id,
+                displayName: user.name || user.email || 'Unknown User',
                 email: user.email || '',
                 photoURL: user.photoURL || ''
-            } : null,
+            },
             contributors: [],
         };
         const docRef = await addDoc(collection(db, 'templates'), template);
         console.log('Template created with ID:', docRef.id);
-        return docRef.id;
+        return { id: docRef.id, ...template };
     } catch (error) {
         console.error('Error adding template:', error);
         throw error;
@@ -164,3 +170,15 @@ export const unfavoriteTemplate = async (templateId, userId) => {
         throw error;
     }
 }
+
+export const incrementTemplateView = async (templateId) => {
+    try {
+        const templateRef = doc(db, 'templates', templateId);
+        await updateDoc(templateRef, {
+            views: increment(1)
+        });
+    } catch (error) {
+        console.error('Error incrementing template view:', error);
+        throw error;
+    }
+};

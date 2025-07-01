@@ -4,8 +4,10 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
 import { createTemplate } from '../../services/templates';
+import { useFirebaseAuth } from '../../hooks/useFirebaseAuth';
 
 const CreateComparisonForm = ({ onSubmit, onCancel }) => {
+    const { user } = useFirebaseAuth();
     const [title, setTitle] = useState('');
     const [imageUrl, setImageUrl] = useState('');
     const [description, setDescription] = useState('');
@@ -31,9 +33,14 @@ const CreateComparisonForm = ({ onSubmit, onCancel }) => {
         e.preventDefault();
         const finalFields = fields.map(f => f.trim()).filter(f => f !== '');
         if (title.trim() && finalFields.length > 0) {
-            const templateData = { title, imageUrl, description, templateFields: finalFields };
+            const templateData = {
+                title,
+                imageUrl,
+                description,
+                templateFields: finalFields
+            };
             try {
-                await createTemplate(templateData);
+                await createTemplate(templateData, user);
                 if (onSubmit) onSubmit(templateData);
             } catch (error) {
                 alert('Failed to create template: ' + error.message);

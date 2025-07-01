@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { timeAgo } from '../../utils/time';
 import FavoriteButton from '../ui/FavoriteButton';
 import { LoginModal } from '../auth/LoginModal';
+import ViewCount from '../ui/ViewCount';
 
 const ComparisonList = ({ comparisons, onCreate, onView }) => {
     const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
@@ -28,7 +29,10 @@ const ComparisonList = ({ comparisons, onCreate, onView }) => {
                             <h2 className="text-xl font-bold text-slate-800 mb-2">{comp.title}</h2>
                             <p className="text-slate-600 text-sm mb-4 flex-grow">{comp.description}</p>
                             <div className="flex justify-between items-center text-sm text-slate-500 mt-auto pt-4 border-t border-slate-100">
-                                <FavoriteButton templateId={comp.id} favorites={comp.favorites} onLoginRequest={() => setIsLoginModalOpen(true)} />
+                                <div className="flex items-center gap-4">
+                                    <FavoriteButton templateId={comp.id} favorites={comp.favorites} onLoginRequest={() => setIsLoginModalOpen(true)} />
+                                    <ViewCount templateId={comp.id} views={comp.views} />
+                                </div>
                                 <div className="flex items-center">
                                     <Clock className="w-4 h-4 mr-1.5" />
                                     <span>Updated {timeAgo(comp.lastUpdated)}</span>
