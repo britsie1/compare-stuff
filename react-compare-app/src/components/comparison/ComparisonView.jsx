@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, CheckSquare, Square, Search, Edit, Edit3 } from 'lucide-react';
+import { Plus, CheckSquare, Square, Search, Edit, Edit3, X, Clock } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import ItemFormModal from './ItemFormModal';
-import { getTemplateItems } from '../../services/templates';
+import { getTemplateItems, addTemplateItem, updateTemplateItem } from '../../services/templates';
 import FavoriteButton from '../ui/FavoriteButton';
 import ViewCount from '../ui/ViewCount';
+import { timeAgo } from '../../utils/time';
 
 const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -34,31 +35,33 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
         );
     };
 
-    const handleItemUpdate = (updatedItem) => {
-        const newItems = items.map(item => 
-            item.id === updatedItem.id ? updatedItem : item
-        );
-        const updatedComparison = {
-            ...comparison,
-            items: newItems,
-        };
-        onUpdate(updatedComparison);
-        setItemToEdit(null); // Close the edit modal
+    const handleItemUpdate = async (updatedItem) => {
+        try {
+            await updateTemplateItem(templateId, updatedItem.id, updatedItem);
+            const fetchedItems = await getTemplateItems(templateId);
+            setItems(fetchedItems);
+            setItemToEdit(null); // Close the edit modal
+            // Optionally update comparison.items if needed
+            onUpdate({ ...comparison, items: fetchedItems });
+        } catch (error) {
+            alert('Failed to update item: ' + error.message);
+        }
     };
     
-    const handleAddItem = (newItemData) => {
-        const newItem = {
-            id: Date.now(),
-            title: newItemData.title,
-            values: newItemData.values,
-        };
-        const updatedComparison = {
-            ...comparison,
-            items: [...items, newItem],
-        };
-        onUpdate(updatedComparison);
-        setSelectedItemIds(prev => [...prev, newItem.id]);
-        setIsAddModalOpen(false);
+    const handleAddItem = async (newItemData) => {
+        try {
+            await addTemplateItem(templateId, newItemData);
+            const fetchedItems = await getTemplateItems(templateId);
+            setItems(fetchedItems);
+            // Select the newly added item
+            if (fetchedItems.length > 0) {
+                setSelectedItemIds(prev => [...prev, fetchedItems[fetchedItems.length - 1].id]);
+            }
+            setIsAddModalOpen(false);
+            onUpdate({ ...comparison, items: fetchedItems });
+        } catch (error) {
+            alert('Failed to add item: ' + error.message);
+        }
     };
     
     const itemsToDisplay = items.filter(item => selectedItemIds.includes(item.id));
@@ -84,7 +87,8 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                                 <FavoriteButton templateId={comparison.id || comparison.templateId} favorites={comparison.favorites} />
                                 <ViewCount templateId={comparison.id || comparison.templateId} views={comparison.views} incrementOnMount={true} />
                                 <div className="flex items-center">
-                                    <span className="ml-1">Last updated: {comparison.lastUpdated ? new Date(comparison.lastUpdated).toLocaleString() : 'N/A'}</span>
+                                    <Clock className="w-4 h-4 mr-1" />
+                                    <span className="ml-1">Updated {timeAgo(comparison.lastUpdated)}</span>
                                 </div>
                             </div>
                         </div>
@@ -166,19 +170,50 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                         </thead>
                         <tbody>
                             {comparison.templateFields.map((field, fieldIndex) => {
-                                const fieldId = typeof field === 'object' ? field.id : fieldIndex;
-                                const fieldLabel = typeof field === 'object' ? field.label : field;
+                                if (field.type === 'section') {
+                                    return (
+                                        <tr key={`section-${fieldIndex}`} className="bg-slate-200">
+                                            <td colSpan={itemsToDisplay.length + 1} className="p-2 font-bold text-slate-700 text-center">{field.value}</td>
+                                        </tr>
+                                    );
+                                }
+
+                                const fieldId = (field && typeof field === 'object' && field.id != null && field.id !== '') ? field.id : fieldIndex;
+                                const fieldLabel = typeof field === 'object' ? field.value : field;
+
                                 return (
-                                    <tr key={fieldId} className="border-t border-slate-200">
+                                    <tr key={`field-${fieldId}`} className="border-t border-slate-200">
                                         <td className="p-4 font-semibold text-slate-600 sticky left-0 bg-white">{fieldLabel}</td>
                                         {itemsToDisplay.map(item => {
-                                            // Find value by field id
                                             const valueObj = Array.isArray(item.values)
                                                 ? item.values.find(v => v.id === fieldId)
                                                 : null;
-                                            return (
-                                                <td key={item.id} className="p-4 text-center text-slate-800">{valueObj ? valueObj.value : '-'}</td>
-                                            );
+                                            const value = valueObj ? valueObj.value : '-';
+                                            const cellKey = `${item.id}-${fieldId}`;
+
+                                            switch (field.fieldType) {
+                                                case 'yes-no':
+                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">{value === 'Yes' ? <CheckSquare className="h-5 w-5 text-green-500 mx-auto" /> : <X className="h-5 w-5 text-red-500 mx-auto" />}</td>;
+                                                case 'currency':
+                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">${value}</td>;
+                                                case 'link': {
+                                                    if (value && typeof value === 'object' && value.text && value.url) {
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800"><a href={value.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">{value.text}</a></td>;
+                                                    } else if (value && typeof value === 'object' && value.url) {
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800"><a href={value.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">{value.url}</a></td>;
+                                                    } else if (value && typeof value === 'object' && value.text) {
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{value.text}</td>;
+                                                    } else if (typeof value === 'string' && value) {
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{value}</td>;
+                                                    } else {
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-400">-</td>;
+                                                    }
+                                                }
+                                                case 'imageUrl':
+                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">{value ? <img src={value} alt={fieldLabel} className="h-16 w-16 object-cover mx-auto rounded" /> : <span className="text-slate-400">-</span>}</td>;
+                                                default:
+                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">{value}</td>;
+                                            }
                                         })}
                                     </tr>
                                 );

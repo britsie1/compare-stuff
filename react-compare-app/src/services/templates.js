@@ -4,6 +4,14 @@ import { app } from '../firebase';
 // Initialize Firestore
 const db = getFirestore(app);
 
+// Helper to generate a unique id (uses crypto.randomUUID if available)
+function generateFieldId() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    return 'field-' + Date.now() + '-' + Math.floor(Math.random() * 1000000);
+}
+
 // Function to create a template
 // NOTE: Make sure you pass the user object as the second argument when calling this function!
 export const createTemplate = async (templateData, user) => {
@@ -14,8 +22,26 @@ export const createTemplate = async (templateData, user) => {
             console.error('createTemplate: user object received:', user);
             throw new Error('You must be logged in to create a template.');
         }
+        // Normalize templateFields to support both 'field' and 'section' types, and assign unique id to each field
+        const normalizedFields = (templateData.templateFields || []).map(f => {
+            if (f.type === 'section') {
+                return {
+                    type: 'section',
+                    value: f.value ? String(f.value).trim() : ''
+                };
+            } else {
+                return {
+                    id: f.id || generateFieldId(),
+                    type: 'field',
+                    value: f.value ? String(f.value).trim() : '',
+                    fieldType: f.fieldType || 'text'
+                };
+            }
+        }).filter(f => f.value !== '' || f.type === 'section');
+
         const template = {
             ...templateData,
+            templateFields: normalizedFields,
             lastUpdated: now,
             creator: {
                 uid: user.id,
@@ -38,7 +64,26 @@ export const createTemplate = async (templateData, user) => {
 export const updateTemplate = async (templateId, updatedData) => {
     try {
         const templateRef = doc(db, 'templates', templateId);
-        await updateDoc(templateRef, updatedData);
+        // Normalize templateFields if present to support both 'field' and 'section' types, and assign unique id to each field
+        let dataToUpdate = { ...updatedData };
+        if (Array.isArray(updatedData.templateFields)) {
+            dataToUpdate.templateFields = updatedData.templateFields.map(f => {
+                if (f.type === 'section') {
+                    return {
+                        type: 'section',
+                        value: f.value ? String(f.value).trim() : ''
+                    };
+                } else {
+                    return {
+                        id: f.id || generateFieldId(),
+                        type: 'field',
+                        value: f.value ? String(f.value).trim() : '',
+                        fieldType: f.fieldType || 'text'
+                    };
+                }
+            }).filter(f => f.value !== '' || f.type === 'section');
+        }
+        await updateDoc(templateRef, dataToUpdate);
         console.log('Template updated:', templateId);
     } catch (error) {
         console.error('Error updating template:', error);
@@ -94,15 +139,61 @@ export const getTemplates = async (pageSize = 10, lastVisible = null) => {
     }
 };
 
+// Helper to deeply remove undefined values from an object/array
+function removeUndefinedDeep(obj) {
+    if (Array.isArray(obj)) {
+        return obj.map(removeUndefinedDeep);
+    } else if (obj && typeof obj === 'object') {
+        const result = {};
+        Object.entries(obj).forEach(([k, v]) => {
+            if (v !== undefined) {
+                result[k] = removeUndefinedDeep(v);
+            }
+        });
+        return result;
+    }
+    return obj;
+}
+
 // Function to add a new item to a template
 export const addTemplateItem = async (templateId, itemData) => {
     try {
+        // Sanitize itemData.values before saving
+        let sanitizedValues = [];
+        if (Array.isArray(itemData.values)) {
+            sanitizedValues = itemData.values.map(v => {
+                if (v && typeof v.value === 'object' && v.value !== null && ('text' in v.value || 'url' in v.value)) {
+                    // For link fields, if both text and url are empty, store empty string
+                    const text = v.value.text || '';
+                    const url = v.value.url || '';
+                    if (!text && !url) return { id: v.id, value: '' };
+                    return { id: v.id, value: { text, url } };
+                } else {
+                    // For all other fields, never store undefined
+                    return { id: v.id, value: v.value !== undefined ? v.value : '' };
+                }
+            });
+        }
+        // Remove undefined from all of itemData
+        const cleanItemData = removeUndefinedDeep({ ...itemData, values: sanitizedValues });
         const itemsCollection = collection(db, 'templates', templateId, 'items');
-        const docRef = await addDoc(itemsCollection, itemData);
+        const docRef = await addDoc(itemsCollection, cleanItemData);
         console.log('Item added to template:', docRef.id);
         return docRef.id;
     } catch (error) {
         console.error('Error adding item to template:', error);
+        throw error;
+    }
+};
+
+// Function to update a single item in a template's items subcollection
+export const updateTemplateItem = async (templateId, itemId, itemData) => {
+    try {
+        const itemRef = doc(db, 'templates', templateId, 'items', itemId);
+        await updateDoc(itemRef, itemData);
+        return true;
+    } catch (error) {
+        console.error('Error updating template item:', error);
         throw error;
     }
 };
