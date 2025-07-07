@@ -1,5 +1,6 @@
 import React from 'react';
-import { Plus, X, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, X, GripVertical } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
@@ -22,6 +23,9 @@ const TemplateFieldsEditor = ({
     setFields(newFields);
   };
 
+
+  // Removed currency handling
+
   const handleFieldTypeChange = (index, fieldType) => {
     const newFields = [...fields];
     newFields[index].fieldType = fieldType;
@@ -42,42 +46,66 @@ const TemplateFieldsEditor = ({
     }
   };
 
-  const moveField = (index, direction) => {
-    const newFields = [...fields];
-    const field = newFields[index];
-    newFields.splice(index, 1);
-    newFields.splice(index + direction, 0, field);
+
+  // Drag and drop reorder
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    const newFields = Array.from(fields);
+    const [removed] = newFields.splice(result.source.index, 1);
+    newFields.splice(result.destination.index, 0, removed);
     setFields(newFields);
   };
 
+
+  // Removed currency options
+
   return (
-    <div>
+    <div className="p-0 sm:p-0"> {/* Remove modal padding for mobile friendliness */}
       {showLabel && <Label>{label}</Label>}
       <p className="text-sm text-slate-500 mb-2">{description}</p>
-      <div className="space-y-3">
-        {fields.map((field, index) => (
-          <div key={field.id || index} className="flex items-center gap-2">
-            {field.type === 'section' ? (
-              <Input type="text" placeholder={`Section ${index + 1} (e.g., General)`} value={field.value} onChange={(e) => handleFieldChange(index, e.target.value)} className="font-bold" />
-            ) : (
-              <>
-                <Input type="text" placeholder={`Field ${index + 1} (e.g., Price)`} value={field.value} onChange={(e) => handleFieldChange(index, e.target.value)} />
-                <FieldTypeSelector value={field.fieldType} onChange={(e) => handleFieldTypeChange(index, e.target.value)} />
-              </>
-            )}
-            <button type="button" onClick={() => moveField(index, -1)} disabled={index === 0} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-100 rounded-full transition-colors">
-              <ArrowUp className="h-5 w-5" />
-            </button>
-            <button type="button" onClick={() => moveField(index, 1)} disabled={index === fields.length - 1} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-100 rounded-full transition-colors">
-              <ArrowDown className="h-5 w-5" />
-            </button>
-            <button type="button" onClick={() => removeField(index)} className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-100 rounded-full transition-colors" disabled={fields.length <= minFields}>
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        ))}
-      </div>
-      <div className="flex gap-2 mt-3">
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="fields-list">
+          {(provided) => (
+            <div
+              className="space-y-2"
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+            >
+              {fields.map((field, index) => (
+                <Draggable key={field.id || index} draggableId={String(field.id || index)} index={index}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      className="flex items-center gap-2 w-full"
+                      style={{ ...provided.draggableProps.style, touchAction: 'manipulation' }}
+                    >
+                      <span {...provided.dragHandleProps} className="cursor-grab text-slate-400 hover:text-indigo-600 p-1 flex-shrink-0">
+                        <GripVertical className="h-5 w-5" />
+                      </span>
+                      {field.type === 'section' ? (
+                        <Input type="text" placeholder={`Section ${index + 1} (e.g., General)`} value={field.value} onChange={(e) => handleFieldChange(index, e.target.value)} className="font-bold flex-1 min-w-0" />
+                      ) : (
+                        <>
+                          <Input type="text" placeholder={`Field ${index + 1} (e.g., Price)`} value={field.value} onChange={(e) => handleFieldChange(index, e.target.value)} className="flex-1 min-w-0" />
+                          <div className="flex-shrink-0 w-28">
+                            <FieldTypeSelector value={field.fieldType} onChange={(e) => handleFieldTypeChange(index, e.target.value)} />
+                          </div>
+                        </>
+                      )}
+                      <button type="button" onClick={() => removeField(index)} className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-100 rounded-full transition-colors flex-shrink-0" disabled={fields.length <= minFields}>
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+      <div className="flex gap-2 mt-3 flex-wrap">
         {showAddField && (
           <Button type="button" onClick={addField} variant="secondary">
             <Plus className="mr-2 h-4 w-4" /> Add Field

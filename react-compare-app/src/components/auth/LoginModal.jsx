@@ -56,7 +56,7 @@ const LoginModal = ({ onClose, onShowSignUp }) => {
 
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center p-4 z-50">
+        <div className="fixed inset-0 bg-slate-300 bg-opacity-60 flex justify-center items-center p-4 z-50">
             <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-sm relative">
                 <button 
                     onClick={onClose}

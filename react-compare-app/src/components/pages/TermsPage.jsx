@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '../ui/Button';
 
 const TermsPage = ({ onBack }) => (
-    <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-xl">
+    <div className="max-w-4xl mx-auto bg-white p-4 md:rounded-lg md:p-8 md:shadow-xl">
         <h1 className="text-3xl font-bold mb-6 text-slate-900">Terms of Use</h1>
         <div className="prose max-w-none text-slate-700">
             <p><strong>Last Updated:</strong> June 23, 2025</p>

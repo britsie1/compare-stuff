@@ -70,7 +70,7 @@ const EditComparisonForm = ({ comparison, onCancel }) => {
     };
 
     return (
-        <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-xl">
+        <div className="max-w-4xl mx-auto bg-white p-4 md:rounded-lg md:p-8 md:shadow-xl">
             <h1 className="text-3xl font-bold mb-6 text-slate-900">Edit Comparison Template</h1>
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>

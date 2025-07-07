@@ -103,10 +103,10 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
     const fieldInput = (field, index) => {
         if (field.fieldType === 'yes-no') {
             return (
-                <div className="flex items-center mt-2">
-                    <input id={`field-${index}-yes`} type="radio" name={`field-${index}`} value="Yes" checked={values[index] === 'Yes'} onChange={(e) => handleValueChange(index, e.target.value)} className="mr-2" />
-                    <Label htmlFor={`field-${index}-yes`} className="mr-4">Yes</Label>
-                    <input id={`field-${index}-no`} type="radio" name={`field-${index}`} value="No" checked={values[index] === 'No'} onChange={(e) => handleValueChange(index, e.target.value)} className="mr-2" />
+                <div className="flex items-center mt-2 gap-2">
+                    <input id={`field-${index}-yes`} type="radio" name={`field-${index}`} value="Yes" checked={values[index] === 'Yes'} onChange={(e) => handleValueChange(index, e.target.value)}  />
+                    <Label htmlFor={`field-${index}-yes`} className="mr-2">Yes</Label>
+                    <input id={`field-${index}-no`} type="radio" name={`field-${index}`} value="No" checked={values[index] === 'No'} onChange={(e) => handleValueChange(index, e.target.value)} />
                     <Label htmlFor={`field-${index}-no`}>No</Label>
                 </div>
             );
@@ -132,8 +132,8 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
     const fieldGroups = groupFieldsBySection(fields);
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-lg max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 bg-gray-300 bg-opacity-50 flex justify-center items-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-2xl p-2 md:p-4 w-full max-w-4xl max-h-[90vh] flex flex-col">
                 <div className="flex justify-between items-center mb-6 flex-shrink-0">
                     <h2 className="text-2xl font-bold text-slate-900">{modalTitle}</h2>
                     <button onClick={onClose} className="p-2 text-slate-500 hover:text-red-600 rounded-full transition-colors">
@@ -145,17 +145,16 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
                         <Label htmlFor="item-title">Item Title</Label>
                         <Input id="item-title" type="text" placeholder="e.g., Discovery Classic Smart" value={title} onChange={(e) => setTitle(e.target.value)} required />
                     </div>
-                    <hr className="my-4"/>
-                    <div className="flex-1 overflow-y-auto space-y-4 pr-2 min-h-0">
+                    <div className="flex-1 overflow-y-auto space-y-4 min-h-0">
                         {fieldGroups.map((group, sectionIdx) => (
-                            <div key={sectionIdx} className="mb-4 border rounded-lg">
+                            <div key={sectionIdx} className="mb-4 border border-gray-200 rounded-lg">
                                 {group.name && (
                                     <button type="button" className="w-full flex justify-between items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-t-lg" onClick={() => handleSectionToggle(sectionIdx)}>
                                         <span className="font-bold text-slate-700">{group.name}</span>
                                         <span>{openSections[sectionIdx] ? '▲' : '▼'}</span>
                                     </button>
                                 )}
-                                <div className={group.name ? (openSections[sectionIdx] ? 'p-4' : 'hidden') : ''}>
+                                <div className="p-2">
                                     {group.fields.map((field, idx) => (
                                         <div key={field.id || field._idx || idx} className="mb-4">
                                             <Label htmlFor={`field-${field._idx}`}>{field.value}</Label>

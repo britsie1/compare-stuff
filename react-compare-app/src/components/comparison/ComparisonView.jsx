@@ -132,11 +132,11 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                     </div>
                     <Input id="item-search" type="text" placeholder="Search for an item..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {filteredItems.map(item => {
                         const isSelected = selectedItemIds.includes(item.id);
                         return (
-                             <div key={item.id} className={`p-3 rounded-lg border-2 flex items-center justify-between gap-3 transition-all ${isSelected ? 'bg-indigo-50 border-indigo-500' : 'bg-slate-50 border-slate-200'}`}>
+                             <div key={item.id} className={`p-3 rounded-lg border-2 flex items-center justify-between gap-2 transition-all ${isSelected ? 'bg-indigo-50 border-indigo-500' : 'bg-slate-50 border-slate-200'}`}>
                                 <label htmlFor={`item-select-${item.id}`} className="flex items-center gap-3 cursor-pointer flex-grow truncate">
                                     <input id={`item-select-${item.id}`} type="checkbox" className="hidden" checked={isSelected} onChange={() => handleToggleItem(item.id)} />
                                     {isSelected ? <CheckSquare className="w-5 h-5 text-indigo-600 flex-shrink-0" /> : <Square className="w-5 h-5 text-slate-400 flex-shrink-0" />}

@@ -133,7 +133,7 @@ const App = () => {
         <AuthProvider>
             <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col">
                 <Navbar user={user} onLoginClick={() => setIsLoginModalOpen(true)} logout={handleLogout} navigate={navigate} />
-                <main className="p-4 md:p-8 flex-grow">
+                <main className="p-2 md:p-8 flex-grow">
                     <Routes>
                         <Route path="/" element={<ComparisonList comparisons={comparisons} onCreate={() => navigate('/create')} onView={id => navigate(`/compare/${id}`)} />} />
                         <Route path="/create" element={<CreateComparisonForm onSubmit={handleCreateComparison} onCancel={() => navigate('/')} />} />

@@ -5,7 +5,6 @@ const FieldTypeSelector = ({ value, onChange }) => {
     const fieldTypes = [
         { value: 'text', label: 'Text' },
         { value: 'number', label: 'Number' },
-        { value: 'currency', label: 'Currency' },
         { value: 'yes-no', label: 'Yes/No' },
         { value: 'link', label: 'Link' },
         { value: 'imageUrl', label: 'Image URL' },
