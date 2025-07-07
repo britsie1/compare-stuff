@@ -162,15 +162,17 @@ export const addTemplateItem = async (templateId, itemData) => {
         let sanitizedValues = [];
         if (Array.isArray(itemData.values)) {
             sanitizedValues = itemData.values.map(v => {
+                // Support hint property
+                const hint = v.hint !== undefined ? v.hint : '';
                 if (v && typeof v.value === 'object' && v.value !== null && ('text' in v.value || 'url' in v.value)) {
                     // For link fields, if both text and url are empty, store empty string
                     const text = v.value.text || '';
                     const url = v.value.url || '';
-                    if (!text && !url) return { id: v.id, value: '' };
-                    return { id: v.id, value: { text, url } };
+                    if (!text && !url) return { id: v.id, value: '', hint };
+                    return { id: v.id, value: { text, url }, hint };
                 } else {
                     // For all other fields, never store undefined
-                    return { id: v.id, value: v.value !== undefined ? v.value : '' };
+                    return { id: v.id, value: v.value !== undefined ? v.value : '', hint };
                 }
             });
         }
@@ -205,8 +207,17 @@ export const getTemplateItems = async (templateId) => {
         const querySnapshot = await getDocs(itemsCollection);
         const items = [];
         querySnapshot.forEach((doc) => {
-            items.push({ id: doc.id, ...doc.data() });
+            const data = doc.data();
+            // Ensure each value object in values[] includes the hint property (even if empty)
+            let values = Array.isArray(data.values)
+                ? data.values.map(v => ({
+                    ...v,
+                    hint: v && typeof v === 'object' && 'hint' in v ? v.hint : ''
+                }))
+                : [];
+            items.push({ id: doc.id, ...data, values });
         });
+        console.log('Items retrieved for template:', templateId, items);
         return items;
     } catch (error) {
         console.error('Error getting items for template:', error);

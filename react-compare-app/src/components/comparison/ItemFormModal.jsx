@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { X } from 'lucide-react';
+import { X, Info } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
@@ -43,6 +43,10 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
         return groups.map(() => true);
     });
 
+    // Hint text state for each field (by index)
+    const [hints, setHints] = useState(() => fields.map(() => ''));
+    const [showHintInput, setShowHintInput] = useState(() => fields.map(() => false));
+
     const handleValueChange = (index, value) => {
         const newValues = [...values];
         newValues[index] = value;
@@ -59,6 +63,16 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
         setOpenSections(prev => prev.map((open, idx) => idx === sectionIdx ? !open : open));
     };
 
+    const handleHintChange = (index, value) => {
+        const newHints = [...hints];
+        newHints[index] = value;
+        setHints(newHints);
+    };
+
+    const handleToggleHintInput = (index) => {
+        setShowHintInput(prev => prev.map((show, i) => i === index ? !show : show));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!title.trim()) {
@@ -69,14 +83,15 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
         const valueObjects = fields.map((field, idx) => {
             // Always use the field's unique id if present, fallback to index only if absolutely necessary
             const fieldId = (field && typeof field === 'object' && field.id != null && field.id !== '') ? field.id : idx;
+            let hint = hints[idx] || '';
             if (field.fieldType === 'link') {
                 const val = values[idx] || { text: '', url: '' };
                 if (!val.text && !val.url) {
-                    return { id: fieldId, value: '' };
+                    return { id: fieldId, value: '', hint };
                 }
-                return { id: fieldId, value: { text: val.text || '', url: val.url || '' } };
+                return { id: fieldId, value: { text: val.text || '', url: val.url || '' }, hint };
             } else {
-                return { id: fieldId, value: values[idx] !== undefined ? values[idx] : '' };
+                return { id: fieldId, value: values[idx] !== undefined ? values[idx] : '', hint };
             }
         });
         const itemData = {
@@ -101,29 +116,69 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
     };
 
     const fieldInput = (field, index) => {
+        // Button to toggle hint input
+        const hintButton = (
+            <button
+                type="button"
+                className={`ml-2 p-1 rounded-full border border-slate-200 transition-colors flex items-center justify-center ${showHintInput[index] || hints[index] ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-100'}`}
+                onClick={() => handleToggleHintInput(index)}
+                aria-label={showHintInput[index] ? 'Hide hint' : (hints[index] ? 'Edit hint' : 'Add hint')}
+                title={showHintInput[index] ? 'Hide hint' : (hints[index] ? 'Edit hint' : 'Add hint')}
+            >
+                <Info className="h-4 w-4" />
+            </button>
+        );
+        const hintInput = showHintInput[index] && (
+            <textarea
+                className="block w-full mt-2 p-2 border border-slate-200 rounded text-sm resize-y min-h-[40px]"
+                placeholder="Add a hint or context for this field (optional)"
+                value={hints[index]}
+                onChange={e => handleHintChange(index, e.target.value)}
+            />
+        );
         if (field.fieldType === 'yes-no') {
             return (
-                <div className="flex items-center mt-2 gap-2">
-                    <input id={`field-${index}-yes`} type="radio" name={`field-${index}`} value="Yes" checked={values[index] === 'Yes'} onChange={(e) => handleValueChange(index, e.target.value)}  />
-                    <Label htmlFor={`field-${index}-yes`} className="mr-2">Yes</Label>
-                    <input id={`field-${index}-no`} type="radio" name={`field-${index}`} value="No" checked={values[index] === 'No'} onChange={(e) => handleValueChange(index, e.target.value)} />
-                    <Label htmlFor={`field-${index}-no`}>No</Label>
+                <div>
+                    <div className="flex items-center mt-2 gap-2">
+                        <input id={`field-${index}-yes`} type="radio" name={`field-${index}`} value="Yes" checked={values[index] === 'Yes'} onChange={(e) => handleValueChange(index, e.target.value)}  />
+                        <Label htmlFor={`field-${index}-yes`} className="mr-2">Yes</Label>
+                        <input id={`field-${index}-no`} type="radio" name={`field-${index}`} value="No" checked={values[index] === 'No'} onChange={(e) => handleValueChange(index, e.target.value)} />
+                        <Label htmlFor={`field-${index}-no`}>No</Label>
+                        {hintButton}
+                    </div>
+                    {hintInput}
                 </div>
             );
         } else if (field.fieldType === 'number' || field.fieldType === 'currency') {
             return (
-                <Input id={`field-${index}`} type="number" placeholder={`Enter value for ${field.value}`} value={values[index]} onChange={(e) => handleValueChange(index, e.target.value)} />
+                <div>
+                    <div className="flex items-center">
+                        <Input id={`field-${index}`} type="number" placeholder={`Enter value for ${field.value}`} value={values[index]} onChange={(e) => handleValueChange(index, e.target.value)} />
+                        {hintButton}
+                    </div>
+                    {hintInput}
+                </div>
             );
         } else if (field.fieldType === 'link') {
             return (
-                <div className="flex gap-2">
-                    <Input id={`field-${index}-text`} type="text" placeholder="Link text" value={values[index]?.text || ''} onChange={e => handleLinkChange(index, 'text', e.target.value)} className="w-1/2" />
-                    <Input id={`field-${index}-url`} type="url" placeholder="URL" value={values[index]?.url || ''} onChange={e => handleLinkChange(index, 'url', e.target.value)} className="w-1/2" />
+                <div>
+                    <div className="flex gap-2 items-center">
+                        <Input id={`field-${index}-text`} type="text" placeholder="Link text" value={values[index]?.text || ''} onChange={e => handleLinkChange(index, 'text', e.target.value)} className="w-1/2" />
+                        <Input id={`field-${index}-url`} type="url" placeholder="URL" value={values[index]?.url || ''} onChange={e => handleLinkChange(index, 'url', e.target.value)} className="w-1/2" />
+                        {hintButton}
+                    </div>
+                    {hintInput}
                 </div>
             );
         } else {
             return (
-                <Input id={`field-${index}`} type="text" placeholder={`Enter value for ${field.value}`} value={values[index]} onChange={(e) => handleValueChange(index, e.target.value)} />
+                <div>
+                    <div className="flex items-center">
+                        <Input id={`field-${index}`} type="text" placeholder={`Enter value for ${field.value}`} value={values[index]} onChange={(e) => handleValueChange(index, e.target.value)} />
+                        {hintButton}
+                    </div>
+                    {hintInput}
+                </div>
             );
         }
     };

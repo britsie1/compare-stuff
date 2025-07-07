@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, CheckSquare, Square, Search, Edit, Edit3, X, Clock } from 'lucide-react';
+import { Plus, CheckSquare, Square, Search, Edit, Edit3, X, Clock, Info } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import ItemFormModal from './ItemFormModal';
@@ -15,6 +15,32 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [items, setItems] = useState([]); // Items from Firestore
     const templateId = comparison.id || comparison.templateId;
+
+    // Tooltip state for field hints
+    const [hintTooltip, setHintTooltip] = useState({ cellKey: null, text: '', x: 0, y: 0, visible: false, persistent: false });
+
+    // Close tooltip on outside click or Escape
+    useEffect(() => {
+        if (!hintTooltip.visible) return;
+        // let isOverTooltip = false;
+        const handleClick = (e) => {
+            // If click is outside the tooltip or icon, close it
+            if (!e.target.closest('.hint-tooltip') && !e.target.closest('.hint-icon')) {
+                setHintTooltip(t => ({ ...t, visible: false, persistent: false, cellKey: null, text: '' }));
+            }
+        };
+        const handleEsc = (e) => {
+            if (e.key === 'Escape') {
+                setHintTooltip(t => ({ ...t, visible: false, persistent: false, cellKey: null, text: '' }));
+            }
+        };
+        document.addEventListener('mousedown', handleClick);
+        document.addEventListener('keydown', handleEsc);
+        return () => {
+            document.removeEventListener('mousedown', handleClick);
+            document.removeEventListener('keydown', handleEsc);
+        };
+    }, [hintTooltip.visible]);
 
     useEffect(() => {
         if (templateId) {
@@ -190,29 +216,67 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                                                 : null;
                                             const value = valueObj ? valueObj.value : '-';
                                             const cellKey = `${item.id}-${fieldId}`;
+                                            const hint = valueObj && typeof valueObj.hint === 'string' && valueObj.hint.trim() ? valueObj.hint : null;
+
+                                            // Helper to render value with optional hint icon
+                                            const renderValueWithHint = (content) => (
+                                                <span className="inline-flex items-center gap-1 relative">
+                                                    {content}
+                                                    {hint && (
+                                                        <span
+                                                            className="ml-1 cursor-pointer text-slate-400 hover:text-indigo-500 hint-icon"
+                                                            tabIndex={0}
+                                                            onMouseEnter={e => {
+                                                                if (hintTooltip.persistent && hintTooltip.cellKey === cellKey) return;
+                                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                                setHintTooltip({ cellKey, text: hint, x: rect.left + rect.width / 2, y: rect.bottom + window.scrollY, visible: true, persistent: false });
+                                                            }}
+                                                            onMouseLeave={() => {
+                                                                if (hintTooltip.persistent && hintTooltip.cellKey === cellKey) return;
+                                                                setHintTooltip(t => t.persistent ? t : { cellKey: null, text: '', x: 0, y: 0, visible: false, persistent: false });
+                                                            }}
+                                                            onFocus={e => {
+                                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                                setHintTooltip({ cellKey, text: hint, x: rect.left + rect.width / 2, y: rect.bottom + window.scrollY, visible: true, persistent: false });
+                                                            }}
+                                                            onBlur={() => {
+                                                                if (hintTooltip.persistent && hintTooltip.cellKey === cellKey) return;
+                                                                setHintTooltip(t => t.persistent ? t : { cellKey: null, text: '', x: 0, y: 0, visible: false, persistent: false });
+                                                            }}
+                                                            onClick={e => {
+                                                                e.stopPropagation();
+                                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                                setHintTooltip({ cellKey, text: hint, x: rect.left + rect.width / 2, y: rect.bottom + window.scrollY, visible: true, persistent: true });
+                                                            }}
+                                                        >
+                                                            <Info className="w-4 h-4 align-middle" />
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            );
 
                                             switch (field.fieldType) {
                                                 case 'yes-no':
-                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">{value === 'Yes' ? <CheckSquare className="h-5 w-5 text-green-500 mx-auto" /> : <X className="h-5 w-5 text-red-500 mx-auto" />}</td>;
+                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value === 'Yes' ? <CheckSquare className="h-5 w-5 text-green-500 mx-auto" /> : <X className="h-5 w-5 text-red-500 mx-auto" />)}</td>;
                                                 case 'currency':
-                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">${value}</td>;
+                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(`$${value}`)}</td>;
                                                 case 'link': {
                                                     if (value && typeof value === 'object' && value.text && value.url) {
-                                                        return <td key={cellKey} className="p-4 text-center text-slate-800"><a href={value.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">{value.text}</a></td>;
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(<a href={value.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">{value.text}</a>)}</td>;
                                                     } else if (value && typeof value === 'object' && value.url) {
-                                                        return <td key={cellKey} className="p-4 text-center text-slate-800"><a href={value.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">{value.url}</a></td>;
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(<a href={value.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">{value.url}</a>)}</td>;
                                                     } else if (value && typeof value === 'object' && value.text) {
-                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{value.text}</td>;
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value.text)}</td>;
                                                     } else if (typeof value === 'string' && value) {
-                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{value}</td>;
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value)}</td>;
                                                     } else {
                                                         return <td key={cellKey} className="p-4 text-center text-slate-400">-</td>;
                                                     }
                                                 }
                                                 case 'imageUrl':
-                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">{value ? <img src={value} alt={fieldLabel} className="h-16 w-16 object-cover mx-auto rounded" /> : <span className="text-slate-400">-</span>}</td>;
+                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value ? <img src={value} alt={fieldLabel} className="h-16 w-16 object-cover mx-auto rounded" /> : <span className="text-slate-400">-</span>)}</td>;
                                                 default:
-                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">{value}</td>;
+                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value)}</td>;
                                             }
                                         })}
                                     </tr>
@@ -229,7 +293,32 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
 
             {isAddModalOpen && <ItemFormModal fields={comparison.templateFields} onClose={() => setIsAddModalOpen(false)} onSave={handleAddItem} modalTitle="Add New Item to Compare" saveButtonText="Save Item" templateId={comparison.id || comparison.templateId} />}
             {itemToEdit && <ItemFormModal item={itemToEdit} fields={comparison.templateFields} onClose={() => setItemToEdit(null)} onSave={handleItemUpdate} modalTitle="Edit Item" saveButtonText="Save Changes" />}
-        </div>
+        {/* Hint Tooltip Popup */}
+        {hintTooltip.visible && hintTooltip.cellKey && (
+            <div
+                className="absolute z-[9999] px-3 py-2 rounded bg-slate-800 text-white text-sm shadow-lg border border-indigo-400 hint-tooltip"
+                style={{
+                    left: hintTooltip.x || window.innerWidth / 2,
+                    top: (hintTooltip.y || 100) + 8,
+                    transform: 'translateX(-50%)',
+                    minWidth: 120,
+                    maxWidth: 260,
+                    pointerEvents: 'auto',
+                    opacity: 1,
+                    zIndex: 9999,
+                }}
+                tabIndex={-1}
+                onMouseEnter={() => {
+                    setHintTooltip(t => t.visible ? { ...t, visible: true, persistent: true } : t);
+                }}
+                onMouseLeave={() => {
+                    setHintTooltip(t => t.persistent ? t : { cellKey: null, text: '', x: 0, y: 0, visible: false, persistent: false });
+                }}
+            >
+                {hintTooltip.text}
+            </div>
+        )}
+    </div>
     );
 };
 
