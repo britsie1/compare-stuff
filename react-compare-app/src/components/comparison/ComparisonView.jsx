@@ -18,6 +18,8 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
 
     // Tooltip state for field hints
     const [hintTooltip, setHintTooltip] = useState({ cellKey: null, text: '', x: 0, y: 0, visible: false, persistent: false });
+    // Collapsed section state: { [sectionIndex]: boolean }
+    const [collapsedSections, setCollapsedSections] = useState({});
 
     // Close tooltip on outside click or Escape
     useEffect(() => {
@@ -73,7 +75,7 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
             alert('Failed to update item: ' + error.message);
         }
     };
-    
+
     const handleAddItem = async (newItemData) => {
         try {
             await addTemplateItem(templateId, newItemData);
@@ -89,21 +91,125 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
             alert('Failed to add item: ' + error.message);
         }
     };
-    
+
     const itemsToDisplay = items.filter(item => selectedItemIds.includes(item.id));
-    
-    const filteredItems = items.filter(item => 
+
+    const filteredItems = items.filter(item =>
         item.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    // Toggle collapse for a section row
+    const handleToggleSection = (sectionIndex) => {
+        setCollapsedSections(prev => ({
+            ...prev,
+            [sectionIndex]: !prev[sectionIndex]
+        }));
+    };
+
+    useEffect(() => {
+        if (itemsToDisplay.length === 0) return; // Only run if there are items to display (table is rendered)
+
+        const mainTable = document.getElementById('main-table');
+        const tableContainer = document.getElementById('table-container');
+        const stickyHeaderPlaceholder = document.getElementById('sticky-header-placeholder');
+        const originalThead = mainTable?.querySelector('thead');
+
+        if (!mainTable || !tableContainer || !stickyHeaderPlaceholder || !originalThead) return;
+
+        // --- STATE ---
+        let isOriginalTheadOnScreen = true;
+        let isTableContainerOnScreen = true;
+
+        // --- SETUP ---
+        const headerContainer = document.createElement('div');
+        headerContainer.classList.add('header-container');
+        headerContainer.style.position = 'relative';
+        headerContainer.style.overflow = 'hidden';
+        const clonedTable = document.createElement('table');
+        clonedTable.className = mainTable.className;
+        const clonedThead = originalThead.cloneNode(true);
+
+        clonedTable.appendChild(clonedThead);
+        headerContainer.appendChild(clonedTable);
+        stickyHeaderPlaceholder.appendChild(headerContainer);
+
+        // --- VISIBILITY LOGIC ---
+        const updateStickyHeaderVisibility = () => {
+            if (!isOriginalTheadOnScreen && isTableContainerOnScreen) {
+                stickyHeaderPlaceholder.style.visibility = 'visible';
+                stickyHeaderPlaceholder.style.display = 'block';
+                handleScroll();
+            } else {
+                stickyHeaderPlaceholder.style.visibility = 'hidden';
+                stickyHeaderPlaceholder.style.display = 'none';
+            }
+        };
+
+        // --- OBSERVERS ---
+        const theadObserver = new IntersectionObserver(
+            ([entry]) => {
+                isOriginalTheadOnScreen = entry.isIntersecting;
+                updateStickyHeaderVisibility();
+            },
+            { threshold: [0] }
+        );
+        theadObserver.observe(originalThead);
+
+        const tableContainerObserver = new IntersectionObserver(
+            ([entry]) => {
+                isTableContainerOnScreen = entry.isIntersecting;
+                updateStickyHeaderVisibility();
+            },
+            {
+                rootMargin: "0px 0px -100% 0px",
+                threshold: [0]
+            }
+        );
+        tableContainerObserver.observe(tableContainer);
+
+        // --- SYNCHRONIZATION LOGIC ---
+        const syncWidths = () => {
+            const originalThs = originalThead.querySelectorAll('th');
+            const clonedThs = clonedThead.querySelectorAll('th');
+            originalThs.forEach((th, i) => {
+                const width = th.getBoundingClientRect().width;
+                if (clonedThs[i]) {
+                    clonedThs[i].style.width = `${width}px`;
+                    clonedThs[i].style.minWidth = `${width}px`;
+                    clonedThs[i].style.maxWidth = `${width}px`;
+                }
+            });
+            clonedTable.style.width = `${mainTable.offsetWidth}px`;
+        };
+
+        const handleScroll = () => {
+            headerContainer.scrollLeft = tableContainer.scrollLeft;
+        };
+
+        tableContainer.addEventListener('scroll', handleScroll);
+
+        const resizeObserver = new ResizeObserver(syncWidths);
+        resizeObserver.observe(mainTable);
+        syncWidths();
+
+        // Cleanup function
+        return () => {
+            theadObserver.disconnect();
+            tableContainerObserver.disconnect();
+            resizeObserver.disconnect();
+            tableContainer.removeEventListener('scroll', handleScroll);
+            stickyHeaderPlaceholder.innerHTML = ''; // Clear the placeholder
+        };
+    }, [itemsToDisplay]);
+
     return (
         <div className="max-w-7xl mx-auto">
-             <button onClick={onBack} className="mb-6 inline-flex items-center text-indigo-600 hover:text-indigo-800 font-semibold">
+            <button onClick={onBack} className="mb-6 inline-flex items-center text-indigo-600 hover:text-indigo-800 font-semibold">
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
                 Back to All Comparisons
             </button>
             <div className="bg-white rounded-lg shadow-xl overflow-hidden mb-8">
-                <img src={comparison.imageUrl || 'https://placehold.co/1200x400/a5b4fc/ffffff?text=Comparison'} alt={comparison.title} className="w-full h-48 md:h-64 object-cover"/>
+                <img src={comparison.imageUrl || 'https://placehold.co/1200x400/a5b4fc/ffffff?text=Comparison'} alt={comparison.title} className="w-full h-48 md:h-64 object-cover" />
                 <div className="p-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                         <div>
@@ -135,15 +241,15 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                     </div>
                 </div>
             </div>
-            
-             {/* Item Selector */}
+
+            {/* Item Selector */}
             <div className="mb-8 p-6 bg-white rounded-lg shadow-lg">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-4">
                     <div>
                         <h3 className="text-xl font-bold text-slate-800">Choose Items to Compare</h3>
                         <p className="text-slate-500">Select at least one item to see it in the table below.</p>
                     </div>
-                     <div className="flex gap-2">
+                    <div className="flex gap-2">
                         <Button onClick={onEditTemplate} variant="secondary">
                             <Edit className="mr-2 h-4 w-4" /> Edit Template
                         </Button>
@@ -152,9 +258,9 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                         </Button>
                     </div>
                 </div>
-                 <div className="relative mb-4">
+                <div className="relative mb-4">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                         <Search className="h-5 w-5 text-slate-400" />
+                        <Search className="h-5 w-5 text-slate-400" />
                     </div>
                     <Input id="item-search" type="text" placeholder="Search for an item..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
                 </div>
@@ -162,7 +268,7 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                     {filteredItems.map(item => {
                         const isSelected = selectedItemIds.includes(item.id);
                         return (
-                             <div key={item.id} className={`p-3 rounded-lg border-2 flex items-center justify-between gap-2 transition-all ${isSelected ? 'bg-indigo-50 border-indigo-500' : 'bg-slate-50 border-slate-200'}`}>
+                            <div key={item.id} className={`p-3 rounded-lg border-2 flex items-center justify-between gap-2 transition-all ${isSelected ? 'bg-indigo-50 border-indigo-500' : 'bg-slate-50 border-slate-200'}`}>
                                 <label htmlFor={`item-select-${item.id}`} className="flex items-center gap-3 cursor-pointer flex-grow truncate">
                                     <input id={`item-select-${item.id}`} type="checkbox" className="hidden" checked={isSelected} onChange={() => handleToggleItem(item.id)} />
                                     {isSelected ? <CheckSquare className="w-5 h-5 text-indigo-600 flex-shrink-0" /> : <Square className="w-5 h-5 text-slate-400 flex-shrink-0" />}
@@ -175,113 +281,136 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                         )
                     })}
                 </div>
-                 {filteredItems.length === 0 && (
+                {filteredItems.length === 0 && (
                     <div className="text-center py-8 text-slate-500">
                         <p>No items match your search.</p>
                     </div>
                 )}
             </div>
 
+            <div id="sticky-header-placeholder" className="sticky top-0 z-100 visibility-hidden diplay-none"></div>
             {/* Comparison Table */}
-            <div className="overflow-x-auto bg-white rounded-lg shadow-lg">
-                 {itemsToDisplay.length > 0 ? (
-                    <table className="w-full">
+            <div id="table-container" className="table-container overflow-x-auto bg-white rounded-lg shadow-lg">
+                {itemsToDisplay.length > 0 ? (
+                    <table id="main-table" className="w-full">
                         <thead>
                             <tr className="bg-slate-100">
-                                <th className="p-4 font-bold text-slate-700 text-left w-1/3 md:w-1/4 lg:w-1/5 sticky left-0 bg-slate-100">Feature</th>
+                                <th className="p-4 font-bold text-slate-700 text-left w-1/3 md:w-1/4 lg:w-1/5 sticky left-0 bg-slate-100 z-30">Feature</th>
                                 {itemsToDisplay.map(item => (
-                                    <th key={item.id} className="p-4 font-bold text-indigo-700 text-center w-48 md:w-56 flex-shrink-0">{item.title}</th>
+                                    <th key={item.id} className="p-4 font-bold text-indigo-700 text-center w-48 md:w-56 flex-shrink-0 bg-slate-100">{item.title}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
-                            {comparison.templateFields.map((field, fieldIndex) => {
-                                if (field.type === 'section') {
+                            {(() => {
+                                // Track section for each row, so collapse only affects its own children
+                                return comparison.templateFields.map((field, fieldIndex, arr) => {
+                                    if (field.type === 'section') {
+                                        const isCollapsed = collapsedSections[fieldIndex];
+                                        return (
+                                            <tr key={`section-${fieldIndex}`} className="bg-slate-200">
+                                                <td colSpan={itemsToDisplay.length + 1} className="p-2 font-bold text-slate-700 text-center cursor-pointer select-none group" onClick={() => handleToggleSection(fieldIndex)}>
+                                                    <span className="inline-flex items-center gap-2">
+                                                        <span className="transition-transform duration-200" style={{ display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
+                                                            {/* Simple chevron icon */}
+                                                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block align-middle"><path d="M6 8l4 4 4-4" stroke="#444444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                                        </span>
+                                                        {field.value}
+                                                        <span className="text-xs text-slate-500 ml-2 group-hover:underline">{isCollapsed ? '(Click to Expand)' : ''}</span>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    }
+
+                                    const parentSectionIndex = arr.slice(0, fieldIndex).reverse().findIndex(f => f.type === 'section');
+                                    if (parentSectionIndex !== -1) {
+                                        const parentSectionField = arr.slice(0, fieldIndex).reverse()[parentSectionIndex];
+                                        const originalIndex = arr.findIndex(f => f === parentSectionField);
+                                        if (collapsedSections[originalIndex]) {
+                                            return null;
+                                        }
+                                    }
+
+                                    const fieldId = (field && typeof field === 'object' && field.id != null && field.id !== '') ? field.id : fieldIndex; ""
+                                    const fieldLabel = typeof field === 'object' ? field.value : field;
+
                                     return (
-                                        <tr key={`section-${fieldIndex}`} className="bg-slate-200">
-                                            <td colSpan={itemsToDisplay.length + 1} className="p-2 font-bold text-slate-700 text-center">{field.value}</td>
+                                        <tr key={`field-${fieldId}`} className="border-t border-slate-200">
+                                            <th className="p-4 font-semibold text-slate-600 sticky left-0 bg-slate-50 z-10">{fieldLabel}</th>
+                                            {itemsToDisplay.map(item => {
+                                                const valueObj = Array.isArray(item.values)
+                                                    ? item.values.find(v => v.id === fieldId)
+                                                    : null;
+                                                const value = valueObj ? valueObj.value : '-';
+                                                const cellKey = `${item.id}-${fieldId}`;
+                                                const hint = valueObj && typeof valueObj.hint === 'string' && valueObj.hint.trim() ? valueObj.hint : null;
+
+                                                // Helper to render value with optional hint icon
+                                                const renderValueWithHint = (content) => (
+                                                    <span className="inline-flex items-center gap-1 relative">
+                                                        {content}
+                                                        {hint && (
+                                                            <span
+                                                                className="ml-1 cursor-pointer text-slate-400 hover:text-indigo-500 hint-icon"
+                                                                tabIndex={0}
+                                                                onMouseEnter={e => {
+                                                                    if (hintTooltip.persistent && hintTooltip.cellKey === cellKey) return;
+                                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                                    setHintTooltip({ cellKey, text: hint, x: rect.left + rect.width / 2, y: rect.bottom + window.scrollY, visible: true, persistent: false });
+                                                                }}
+                                                                onMouseLeave={() => {
+                                                                    if (hintTooltip.persistent && hintTooltip.cellKey === cellKey) return;
+                                                                    setHintTooltip(t => t.persistent ? t : { cellKey: null, text: '', x: 0, y: 0, visible: false, persistent: false });
+                                                                }}
+                                                                onFocus={e => {
+                                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                                    setHintTooltip({ cellKey, text: hint, x: rect.left + rect.width / 2, y: rect.bottom + window.scrollY, visible: true, persistent: false });
+                                                                }}
+                                                                onBlur={() => {
+                                                                    if (hintTooltip.persistent && hintTooltip.cellKey === cellKey) return;
+                                                                    setHintTooltip(t => t.persistent ? t : { cellKey: null, text: '', x: 0, y: 0, visible: false, persistent: false });
+                                                                }}
+                                                                onClick={e => {
+                                                                    e.stopPropagation();
+                                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                                    setHintTooltip({ cellKey, text: hint, x: rect.left + rect.width / 2, y: rect.bottom + window.scrollY, visible: true, persistent: true });
+                                                                }}
+                                                            >
+                                                                <Info className="w-4 h-4 align-middle" />
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                );
+
+                                                switch (field.fieldType) {
+                                                    case 'yes-no':
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value === 'Yes' ? <CheckSquare className="h-5 w-5 text-green-500 mx-auto" /> : <X className="h-5 w-5 text-red-500 mx-auto" />)}</td>;
+                                                    case 'currency':
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(`$${value}`)}</td>;
+                                                    case 'link': {
+                                                        if (value && typeof value === 'object' && value.text && value.url) {
+                                                            return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(<a href={value.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">{value.text}</a>)}</td>;
+                                                        } else if (value && typeof value === 'object' && value.url) {
+                                                            return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(<a href={value.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">{value.url}</a>)}</td>;
+                                                        } else if (value && typeof value === 'object' && value.text) {
+                                                            return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value.text)}</td>;
+                                                        } else if (typeof value === 'string' && value) {
+                                                            return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value)}</td>;
+                                                        } else {
+                                                            return <td key={cellKey} className="p-4 text-center text-slate-400">-</td>;
+                                                        }
+                                                    }
+                                                    case 'imageUrl':
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value ? <img src={value} alt={fieldLabel} className="h-16 w-16 object-cover mx-auto rounded" /> : <span className="text-slate-400">-</span>)}</td>;
+                                                    default:
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value)}</td>;
+                                                }
+                                            })}
                                         </tr>
                                     );
-                                }
-
-                                const fieldId = (field && typeof field === 'object' && field.id != null && field.id !== '') ? field.id : fieldIndex;
-                                const fieldLabel = typeof field === 'object' ? field.value : field;
-
-                                return (
-                                    <tr key={`field-${fieldId}`} className="border-t border-slate-200">
-                                        <td className="p-4 font-semibold text-slate-600 sticky left-0 bg-white">{fieldLabel}</td>
-                                        {itemsToDisplay.map(item => {
-                                            const valueObj = Array.isArray(item.values)
-                                                ? item.values.find(v => v.id === fieldId)
-                                                : null;
-                                            const value = valueObj ? valueObj.value : '-';
-                                            const cellKey = `${item.id}-${fieldId}`;
-                                            const hint = valueObj && typeof valueObj.hint === 'string' && valueObj.hint.trim() ? valueObj.hint : null;
-
-                                            // Helper to render value with optional hint icon
-                                            const renderValueWithHint = (content) => (
-                                                <span className="inline-flex items-center gap-1 relative">
-                                                    {content}
-                                                    {hint && (
-                                                        <span
-                                                            className="ml-1 cursor-pointer text-slate-400 hover:text-indigo-500 hint-icon"
-                                                            tabIndex={0}
-                                                            onMouseEnter={e => {
-                                                                if (hintTooltip.persistent && hintTooltip.cellKey === cellKey) return;
-                                                                const rect = e.currentTarget.getBoundingClientRect();
-                                                                setHintTooltip({ cellKey, text: hint, x: rect.left + rect.width / 2, y: rect.bottom + window.scrollY, visible: true, persistent: false });
-                                                            }}
-                                                            onMouseLeave={() => {
-                                                                if (hintTooltip.persistent && hintTooltip.cellKey === cellKey) return;
-                                                                setHintTooltip(t => t.persistent ? t : { cellKey: null, text: '', x: 0, y: 0, visible: false, persistent: false });
-                                                            }}
-                                                            onFocus={e => {
-                                                                const rect = e.currentTarget.getBoundingClientRect();
-                                                                setHintTooltip({ cellKey, text: hint, x: rect.left + rect.width / 2, y: rect.bottom + window.scrollY, visible: true, persistent: false });
-                                                            }}
-                                                            onBlur={() => {
-                                                                if (hintTooltip.persistent && hintTooltip.cellKey === cellKey) return;
-                                                                setHintTooltip(t => t.persistent ? t : { cellKey: null, text: '', x: 0, y: 0, visible: false, persistent: false });
-                                                            }}
-                                                            onClick={e => {
-                                                                e.stopPropagation();
-                                                                const rect = e.currentTarget.getBoundingClientRect();
-                                                                setHintTooltip({ cellKey, text: hint, x: rect.left + rect.width / 2, y: rect.bottom + window.scrollY, visible: true, persistent: true });
-                                                            }}
-                                                        >
-                                                            <Info className="w-4 h-4 align-middle" />
-                                                        </span>
-                                                    )}
-                                                </span>
-                                            );
-
-                                            switch (field.fieldType) {
-                                                case 'yes-no':
-                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value === 'Yes' ? <CheckSquare className="h-5 w-5 text-green-500 mx-auto" /> : <X className="h-5 w-5 text-red-500 mx-auto" />)}</td>;
-                                                case 'currency':
-                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(`$${value}`)}</td>;
-                                                case 'link': {
-                                                    if (value && typeof value === 'object' && value.text && value.url) {
-                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(<a href={value.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">{value.text}</a>)}</td>;
-                                                    } else if (value && typeof value === 'object' && value.url) {
-                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(<a href={value.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">{value.url}</a>)}</td>;
-                                                    } else if (value && typeof value === 'object' && value.text) {
-                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value.text)}</td>;
-                                                    } else if (typeof value === 'string' && value) {
-                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value)}</td>;
-                                                    } else {
-                                                        return <td key={cellKey} className="p-4 text-center text-slate-400">-</td>;
-                                                    }
-                                                }
-                                                case 'imageUrl':
-                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value ? <img src={value} alt={fieldLabel} className="h-16 w-16 object-cover mx-auto rounded" /> : <span className="text-slate-400">-</span>)}</td>;
-                                                default:
-                                                    return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value)}</td>;
-                                            }
-                                        })}
-                                    </tr>
-                                );
-                            })}
+                                });
+                            })()}
                         </tbody>
                     </table>
                 ) : (
@@ -293,32 +422,32 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
 
             {isAddModalOpen && <ItemFormModal fields={comparison.templateFields} onClose={() => setIsAddModalOpen(false)} onSave={handleAddItem} modalTitle="Add New Item to Compare" saveButtonText="Save Item" templateId={comparison.id || comparison.templateId} />}
             {itemToEdit && <ItemFormModal item={itemToEdit} fields={comparison.templateFields} onClose={() => setItemToEdit(null)} onSave={handleItemUpdate} modalTitle="Edit Item" saveButtonText="Save Changes" />}
-        {/* Hint Tooltip Popup */}
-        {hintTooltip.visible && hintTooltip.cellKey && (
-            <div
-                className="absolute z-[9999] px-3 py-2 rounded bg-slate-800 text-white text-sm shadow-lg border border-indigo-400 hint-tooltip"
-                style={{
-                    left: hintTooltip.x || window.innerWidth / 2,
-                    top: (hintTooltip.y || 100) + 8,
-                    transform: 'translateX(-50%)',
-                    minWidth: 120,
-                    maxWidth: 260,
-                    pointerEvents: 'auto',
-                    opacity: 1,
-                    zIndex: 9999,
-                }}
-                tabIndex={-1}
-                onMouseEnter={() => {
-                    setHintTooltip(t => t.visible ? { ...t, visible: true, persistent: true } : t);
-                }}
-                onMouseLeave={() => {
-                    setHintTooltip(t => t.persistent ? t : { cellKey: null, text: '', x: 0, y: 0, visible: false, persistent: false });
-                }}
-            >
-                {hintTooltip.text}
-            </div>
-        )}
-    </div>
+            {/* Hint Tooltip Popup */}
+            {hintTooltip.visible && hintTooltip.cellKey && (
+                <div
+                    className="absolute z-[9999] px-3 py-2 rounded bg-slate-800 text-white text-sm shadow-lg border border-indigo-400 hint-tooltip"
+                    style={{
+                        left: hintTooltip.x || window.innerWidth / 2,
+                        top: (hintTooltip.y || 100) + 8,
+                        transform: 'translateX(-50%)',
+                        minWidth: 120,
+                        maxWidth: 260,
+                        pointerEvents: 'auto',
+                        opacity: 1,
+                        zIndex: 9999,
+                    }}
+                    tabIndex={-1}
+                    onMouseEnter={() => {
+                        setHintTooltip(t => t.visible ? { ...t, visible: true, persistent: true } : t);
+                    }}
+                    onMouseLeave={() => {
+                        setHintTooltip(t => t.persistent ? t : { cellKey: null, text: '', x: 0, y: 0, visible: false, persistent: false });
+                    }}
+                >
+                    {hintTooltip.text}
+                </div>
+            )}
+        </div>
     );
 };
 
