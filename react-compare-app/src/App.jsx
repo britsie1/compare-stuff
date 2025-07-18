@@ -10,7 +10,6 @@ import { TermsPage } from './components/pages/TermsPage';
 import { LoginModal } from './components/auth/LoginModal';
 import { SignUpModal } from './components/auth/SignUpModal';
 import { Routes, Route, useNavigate, useParams, useLocation } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import { getTemplates, getTemplate } from './services/templates'
 import { AuthProvider } from './context/AuthContext';
 
@@ -60,15 +59,8 @@ const App = () => {
     };
 
     const handleCreateComparison = (newComparison) => {
-      const fullComparison = {
-            ...newComparison,
-            id: uuidv4(),
-            items: [],
-            favorites: 0,
-            lastUpdated: new Date().toISOString(),
-        };
-        setComparisons([...comparisons, fullComparison]);
-        navigate(`/compare/${fullComparison.id}`);
+      setComparisons([...comparisons, newComparison]);
+      navigate(`/compare/${newComparison.id}`);
     };
 
     const handleUpdateComparison = (updatedComparison) => {

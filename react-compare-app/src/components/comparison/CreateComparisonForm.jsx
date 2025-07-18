@@ -25,8 +25,8 @@ const CreateComparisonForm = ({ onSubmit, onCancel }) => {
                 templateFields: finalFields
             };
             try {
-                await createTemplate(templateData, user);
-                if (onSubmit) onSubmit(templateData);
+                const createdTemplate = await createTemplate(templateData, user);
+                if (onSubmit) onSubmit(createdTemplate);
             } catch (error) {
                 alert('Failed to create template: ' + error.message);
             }

@@ -4,6 +4,7 @@ import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
 import { deleteTemplate, updateTemplate } from '../../services/templates';
 import TemplateFieldsEditor from './TemplateFieldsEditor';
+import {useNavigate } from 'react-router-dom';
 
 const EditComparisonForm = ({ comparison, onCancel }) => {
     const [title, setTitle] = useState(comparison.title);
@@ -11,6 +12,7 @@ const EditComparisonForm = ({ comparison, onCancel }) => {
     const [description, setDescription] = useState(comparison.description);
     const [fields, setFields] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const navigate = useNavigate();
 
     // Initialize fields with correct structure (type, value, fieldType, id)
     useEffect(() => {
@@ -63,7 +65,7 @@ const EditComparisonForm = ({ comparison, onCancel }) => {
         setShowDeleteConfirm(false);
         try {
             await deleteTemplate(comparison.id);
-            if (onCancel) onCancel();
+            navigate('/');
         } catch (error) {
             alert('Failed to delete template: ' + error.message);
         }
