@@ -308,9 +308,9 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                                     if (field.type === 'section') {
                                         const isCollapsed = collapsedSections[fieldIndex];
                                         return (
-                                            <tr key={`section-${fieldIndex}`} className="bg-slate-200">
-                                                <td colSpan={itemsToDisplay.length + 1} className="p-2 font-bold text-slate-700 text-center cursor-pointer select-none group" onClick={() => handleToggleSection(fieldIndex)}>
-                                                    <span className="inline-flex items-center gap-2">
+                                            <tr key={`section-${fieldIndex}`} className="bg-slate-200 h-11">
+                                                <td colSpan={itemsToDisplay.length + 1} className="p-2 font-bold text-slate-700 text-center cursor-pointer select-none group" style={{ alignContent: 'start' }} onClick={() => handleToggleSection(fieldIndex)}>
+                                                    <span className="inline-flex items-center gap-2 left-1/2 transform -translate-x-1/2" style={{ position: 'absolute', whiteSpace: 'nowrap' }}>
                                                         <span className="transition-transform duration-200" style={{ display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
                                                             {/* Simple chevron icon */}
                                                             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block align-middle"><path d="M6 8l4 4 4-4" stroke="#444444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
