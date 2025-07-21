@@ -4,5 +4,6 @@
   base = "/"
 
 [[redirects]]
-  from = "/compare/*"
-  to = "/compare"
+  from = "/*"
+  to = "/index.html"
+  status = 200
