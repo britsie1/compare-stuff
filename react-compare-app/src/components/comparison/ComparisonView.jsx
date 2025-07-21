@@ -1,25 +1,46 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Plus, CheckSquare, Square, Search, Edit, Edit3, X, Clock, Info } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import ItemFormModal from './ItemFormModal';
-import { getTemplateItems, addTemplateItem, updateTemplateItem } from '../../services/templates';
+import { getTemplate, getTemplateItems, addTemplateItem, updateTemplateItem } from '../../services/templates';
 import FavoriteButton from '../ui/FavoriteButton';
 import ViewCount from '../ui/ViewCount';
 import { timeAgo } from '../../utils/time';
 
-const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
+const ComparisonView = ({ comparison: initialComparison, onUpdate, onBack, onEditTemplate }) => {
+    const { templateId: urlTemplateId } = useParams();
+    const [comparison, setComparison] = useState(initialComparison);
+    const [isLoading, setIsLoading] = useState(!initialComparison);
+    const [error, setError] = useState(null);
+
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [itemToEdit, setItemToEdit] = useState(null);
     const [selectedItemIds, setSelectedItemIds] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [items, setItems] = useState([]); // Items from Firestore
-    const templateId = comparison.id || comparison.templateId;
+    const templateId = comparison?.id || comparison?.templateId || urlTemplateId;
 
     // Tooltip state for field hints
     const [hintTooltip, setHintTooltip] = useState({ cellKey: null, text: '', x: 0, y: 0, visible: false, persistent: false });
     // Collapsed section state: { [sectionIndex]: boolean }
     const [collapsedSections, setCollapsedSections] = useState({});
+
+    useEffect(() => {
+        if (!comparison && templateId) {
+            setIsLoading(true);
+            getTemplate(templateId)
+                .then(data => {
+                    setComparison(data);
+                    setIsLoading(false);
+                })
+                .catch(err => {
+                    setError(err.message);
+                    setIsLoading(false);
+                });
+        }
+    }, [comparison, templateId]);
 
     // Close tooltip on outside click or Escape
     useEffect(() => {
@@ -70,7 +91,9 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
             setItems(fetchedItems);
             setItemToEdit(null); // Close the edit modal
             // Optionally update comparison.items if needed
-            onUpdate({ ...comparison, items: fetchedItems });
+            if (onUpdate) {
+                onUpdate({ ...comparison, items: fetchedItems });
+            }
         } catch (error) {
             alert('Failed to update item: ' + error.message);
         }
@@ -86,7 +109,9 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                 setSelectedItemIds(prev => [...prev, fetchedItems[fetchedItems.length - 1].id]);
             }
             setIsAddModalOpen(false);
-            onUpdate({ ...comparison, items: fetchedItems });
+            if (onUpdate) {
+                onUpdate({ ...comparison, items: fetchedItems });
+            }
         } catch (error) {
             alert('Failed to add item: ' + error.message);
         }
@@ -202,9 +227,23 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
         };
     }, [itemsToDisplay]);
 
+    if (isLoading) {
+        return <div className="text-center p-12">Loading...</div>;
+    }
+
+    if (error) {
+        return <div className="text-center p-12 text-red-500">Error: {error}</div>;
+    }
+
+    if (!comparison) {
+        return <div className="text-center p-12">Comparison not found.</div>;
+    }
+
+    const handleBack = onBack || (() => window.history.back());
+
     return (
         <div className="max-w-7xl mx-auto">
-            <button onClick={onBack} className="mb-6 inline-flex items-center text-indigo-600 hover:text-indigo-800 font-semibold">
+            <button onClick={handleBack} className="mb-6 inline-flex items-center text-indigo-600 hover:text-indigo-800 font-semibold">
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
                 Back to All Comparisons
             </button>
