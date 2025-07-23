@@ -348,7 +348,7 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                                     const fieldLabel = typeof field === 'object' ? field.value : field;
 
                                     return (
-                                        <tr key={`field-${fieldId}`} className="border-t border-slate-200">
+                                        <tr key={`field-${fieldId}`} className="border-t border-slate-200 hover:bg-slate-50 transition-colors">
                                             <th className="p-4 font-semibold text-slate-600 sticky left-0 bg-slate-50 z-10">{fieldLabel}</th>
                                             {itemsToDisplay.map(item => {
                                                 const valueObj = Array.isArray(item.values)

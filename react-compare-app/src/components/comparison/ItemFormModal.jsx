@@ -243,14 +243,16 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
                                         <span>{openSections[sectionIdx] ? '▲' : '▼'}</span>
                                     </button>
                                 )}
-                                <div className="p-2">
-                                    {group.fields.map((field, idx) => (
-                                        <div key={field.id || field._idx || idx} className="mb-4">
-                                            <Label htmlFor={`field-${field._idx}`}>{field.value}</Label>
-                                            {fieldInput(field, field._idx)}
-                                        </div>
-                                    ))}
-                                </div>
+                                {openSections[sectionIdx] && (
+                                    <div className="p-2">
+                                        {group.fields.map((field, idx) => (
+                                            <div key={field.id || field._idx || idx} className="mb-4">
+                                                <Label htmlFor={`field-${field._idx}`}>{field.value}</Label>
+                                                {fieldInput(field, field._idx)}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
