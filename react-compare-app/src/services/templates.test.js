@@ -1,5 +1,5 @@
 import {
-    createTemplate, updateTemplate, deleteTemplate, getTemplate, getTemplates, addTemplateItem, updateTemplateItem, getTemplateItems, favoriteTemplate, unfavoriteTemplate, incrementTemplateView
+    createTemplate, updateTemplate, deleteTemplate, getTemplate, getTemplates, addTemplateItem, updateTemplateItem, getTemplateItems, deleteTemplateItem, favoriteTemplate, unfavoriteTemplate, incrementTemplateView
 } from './templates';
 
 
@@ -223,6 +223,16 @@ describe('templates service', () => {
     it('throws on error when getting template items', async () => {
         firestore.getDocs.mockRejectedValueOnce(new Error('Firestore error'));
         await expect(getTemplateItems('tid')).rejects.toThrow('Firestore error');
+    });
+
+    it('deletes a template item', async () => {
+        await expect(deleteTemplateItem('tid', 'iid')).resolves.toBeUndefined();
+        expect(firestore.deleteDoc).toHaveBeenCalledWith(firestore.doc(mockDb, 'templates', 'tid', 'items', 'iid'));
+    });
+
+    it('throws on error when deleting a template item', async () => {
+        firestore.deleteDoc.mockRejectedValueOnce(new Error('Firestore error'));
+        await expect(deleteTemplateItem('tid', 'iid')).rejects.toThrow('Firestore error');
     });
     it('favorites a template', async () => {
         firestore.getDoc.mockResolvedValueOnce({

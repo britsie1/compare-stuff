@@ -3,7 +3,7 @@ import { Plus, CheckSquare, Square, Search, Edit, Edit3, X, Clock, Info } from '
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import ItemFormModal from './ItemFormModal';
-import { getTemplateItems, addTemplateItem, updateTemplateItem } from '../../services/templates';
+import { getTemplateItems, addTemplateItem, updateTemplateItem, deleteTemplateItem } from '../../services/templates';
 import FavoriteButton from '../ui/FavoriteButton';
 import ViewCount from '../ui/ViewCount';
 import { timeAgo } from '../../utils/time';
@@ -89,6 +89,18 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
             onUpdate({ ...comparison, items: fetchedItems });
         } catch (error) {
             alert('Failed to add item: ' + error.message);
+        }
+    };
+
+    const handleDeleteItem = async (templateId, itemId) => {
+        try {
+            await deleteTemplateItem(templateId, itemId);
+            const fetchedItems = await getTemplateItems(templateId);
+            setItems(fetchedItems);
+            setSelectedItemIds(prev => prev.filter(id => id !== itemId)); // Deselect deleted item
+            onUpdate({ ...comparison, items: fetchedItems });
+        } catch (error) {
+            alert('Failed to delete item: ' + error.message);
         }
     };
 
@@ -421,7 +433,7 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
             </div>
 
             {isAddModalOpen && <ItemFormModal fields={comparison.templateFields} onClose={() => setIsAddModalOpen(false)} onSave={handleAddItem} modalTitle="Add New Item to Compare" saveButtonText="Save Item" templateId={comparison.id || comparison.templateId} />}
-            {itemToEdit && <ItemFormModal item={itemToEdit} fields={comparison.templateFields} onClose={() => setItemToEdit(null)} onSave={handleItemUpdate} modalTitle="Edit Item" saveButtonText="Save Changes" />}
+            {itemToEdit && <ItemFormModal item={itemToEdit} fields={comparison.templateFields} onClose={() => setItemToEdit(null)} onSave={handleItemUpdate} onDelete={handleDeleteItem} modalTitle="Edit Item" saveButtonText="Save Changes" templateId={comparison.id || comparison.templateId} />}
             {/* Hint Tooltip Popup */}
             {hintTooltip.visible && hintTooltip.cellKey && (
                 <div

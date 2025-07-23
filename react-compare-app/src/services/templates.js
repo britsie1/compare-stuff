@@ -273,6 +273,17 @@ export const unfavoriteTemplate = async (templateId, userId) => {
     }
 }
 
+export const deleteTemplateItem = async (templateId, itemId) => {
+    try {
+        const itemRef = doc(db, 'templates', templateId, 'items', itemId);
+        await deleteDoc(itemRef);
+        console.log('Item deleted from template:', templateId, 'item:', itemId);
+    } catch (error) {
+        console.error('Error deleting item from template:', error);
+        throw error;
+    }
+};
+
 export const incrementTemplateView = async (templateId) => {
     try {
         const templateRef = doc(db, 'templates', templateId);

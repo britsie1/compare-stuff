@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { X, Info } from 'lucide-react';
+import { X, Info, Trash2 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
+import { deleteTemplateItem } from '../../services/templates';
 
 const groupFieldsBySection = (fields) => {
     const groups = [];
@@ -20,7 +21,9 @@ const groupFieldsBySection = (fields) => {
     return groups;
 };
 
-const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveButtonText, templateId }) => {
+const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveButtonText, templateId, onDelete }) => {
+    
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     // Always map field ids to values for robust matching
     const [title, setTitle] = useState(item ? item.title : '');
     // For link fields, store as {text, url}, for others as string
@@ -44,8 +47,26 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
     });
 
     // Hint text state for each field (by index)
-    const [hints, setHints] = useState(() => fields.map(() => ''));
-    const [showHintInput, setShowHintInput] = useState(() => fields.map(() => false));
+    const [hints, setHints] = useState(() =>
+        fields.map((field, index) => {
+            if (item && Array.isArray(item.values)) {
+                const fieldId = typeof field === 'object' ? field.id : index;
+                const found = item.values.find(v => v.id === fieldId);
+                return found && found.hint ? found.hint : '';
+            }
+            return '';
+        })
+    );
+    const [showHintInput, setShowHintInput] = useState(() =>
+        fields.map((field, index) => {
+            if (item && Array.isArray(item.values)) {
+                const fieldId = typeof field === 'object' ? field.id : index;
+                const found = item.values.find(v => v.id === fieldId);
+                return found && found.hint ? true : false;
+            }
+            return false;
+        })
+    );
 
     const handleValueChange = (index, value) => {
         const newValues = [...values];
@@ -112,6 +133,19 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
             }
         } else {
             onSave && onSave(itemData);
+        }
+    };
+
+    const handleDeleteItem = async () => {
+        if (!templateId || !item || !item.id) {
+            alert('Error: templateId and item ID are required to delete an item.');
+            return;
+        }
+        try {
+            onDelete && onDelete(templateId, item.id);
+            onClose(); // Close the modal after successful deletion
+        } catch (error) {
+            alert('Failed to delete item: ' + error.message);
         }
     };
 
@@ -221,11 +255,29 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
                         ))}
                     </div>
                     <div className="flex justify-end gap-4 pt-6 flex-shrink-0">
+                        {item && (
+                            <Button type="button" variant="danger" onClick={() => setShowDeleteConfirm(true)} className="mr-auto">
+                                <Trash2 className="h-5 w-5 mr-2" /> Delete Item
+                            </Button>
+                        )}
                         <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
                         <Button type="submit">{saveButtonText}</Button>
                     </div>
                 </form>
             </div>
+
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 bg-gray-300 bg-opacity-50 flex justify-center items-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md">
+                        <h3 className="text-xl font-bold mb-4">Confirm Deletion</h3>
+                        <p className="mb-6">Are you sure you want to delete this item? This action cannot be undone.</p>
+                        <div className="flex justify-end gap-4">
+                            <Button type="button" variant="secondary" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+                            <Button type="button" variant="danger" onClick={handleDeleteItem}>Delete</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -235,6 +287,7 @@ ItemFormModal.propTypes = {
     fields: PropTypes.array.isRequired,
     onClose: PropTypes.func.isRequired,
     onSave: PropTypes.func,
+    onDelete: PropTypes.func, // Add onDelete prop type
     modalTitle: PropTypes.string.isRequired,
     saveButtonText: PropTypes.string.isRequired,
     templateId: (props, propName, componentName) => {
