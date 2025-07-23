@@ -1,9 +1,16 @@
 module.exports = {
   transform: {
-    '^.+\\.[jt]sx?$': 'babel-jest',
+    '^.+\.jsx?$': 'babel-jest',
+    '^.+\.mjs$': 'babel-jest',
   },
   testEnvironment: 'jsdom',
   extensionsToTreatAsEsm: ['.jsx'],
-  // If you use ESM in your own code, add:
-  // "extensionsToTreatAsEsm": [".js", ".jsx"],
+  moduleNameMapper: {
+    '\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '\.(jpg|jpeg|png|gif|webp|svg)$': '<rootDir>/__mocks__/fileMock.js',
+    '^\.\/config\/firebaseConfig$': '<rootDir>/__mocks__/src/config/firebaseConfig.js',
+    '^firebase/app$': '<rootDir>/__mocks__/firebase/app.js',
+    '^firebase/firestore$': '<rootDir>/__mocks__/firebase/firestore.js'
+  },
+  setupFilesAfterEnv: ['./jest.setup.js'],
 };
