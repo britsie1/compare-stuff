@@ -63,6 +63,15 @@ const Navbar = ({ user, onLoginClick, logout, navigate }) => {
                                         </div>
                                         <button
                                             onClick={() => {
+                                                navigate('/my-templates');
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                                        >
+                                            My Templates
+                                        </button>
+                                        <button
+                                            onClick={() => {
                                                 logout();
                                                 setIsDropdownOpen(false);
                                             }}

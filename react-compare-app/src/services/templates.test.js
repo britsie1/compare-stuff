@@ -1,5 +1,5 @@
 import {
-    createTemplate, updateTemplate, deleteTemplate, getTemplate, getTemplates, addTemplateItem, updateTemplateItem, getTemplateItems, deleteTemplateItem, favoriteTemplate, unfavoriteTemplate, incrementTemplateView
+    createTemplate, updateTemplate, deleteTemplate, getTemplate, getTemplates, addTemplateItem, updateTemplateItem, getTemplateItems, deleteTemplateItem, favoriteTemplate, unfavoriteTemplate, incrementTemplateView, getUserTemplates, setTemplateStatus
 } from './templates';
 
 
@@ -21,6 +21,7 @@ jest.mock('firebase/firestore', () => ({
     limit: jest.fn(),
     startAfter: jest.fn(),
     increment: jest.fn(() => 1),
+    where: jest.fn(),
 }));
 
 const mockDb = {};
@@ -40,13 +41,14 @@ beforeEach(() => {
 });
 
 describe('templates service', () => {
-    it('creates a template', async () => {
+    it('creates a template with default unpublished status', async () => {
         const user = { id: 'u1', name: 'Test User', email: 'test@example.com' };
         const templateData = { title: 'T1', templateFields: [{ type: 'field', value: 'Field1' }] };
         const result = await createTemplate(templateData, user);
         expect(result).toHaveProperty('id', 'mockDocId');
         expect(result).toHaveProperty('title', 'T1');
         expect(result.templateFields[0]).toEqual({ id: expect.any(String), type: 'field', value: 'Field1', fieldType: 'text' });
+        expect(result).toHaveProperty('status', 'unpublished');
     });
 
     it('creates a template with section and various field types', async () => {
@@ -111,6 +113,8 @@ describe('templates service', () => {
     });
 
     it('gets a template', async () => {
+        const templateData = { title: 'Test Template', status: 'published' };
+        firestore.getDoc.mockResolvedValueOnce({ exists: () => true, id: 'mockDocId', data: () => templateData });
         const result = await getTemplate('tid');
         expect(result).toHaveProperty('id', 'mockDocId');
         expect(result).toHaveProperty('title', 'Test Template');
@@ -121,10 +125,47 @@ describe('templates service', () => {
         await expect(getTemplate('nonExistentId')).rejects.toThrow('Template not found');
     });
 
-    it('gets templates (paginated)', async () => {
-        const result = await getTemplates();
-        expect(result.templates.length).toBeGreaterThan(0);
-        expect(result.templates[0]).toHaveProperty('id', 'item1');
+    it('allows anyone to get a published template', async () => {
+        const templateData = { title: 'Published Template', status: 'published' };
+        firestore.getDoc.mockResolvedValueOnce({ exists: () => true, data: () => templateData });
+        const result = await getTemplate('tid');
+        expect(result).toMatchObject(templateData);
+    });
+
+    it('allows anyone to get a private template', async () => {
+        const templateData = { title: 'Private Template', status: 'private' };
+        firestore.getDoc.mockResolvedValueOnce({ exists: () => true, data: () => templateData });
+        const result = await getTemplate('tid');
+        expect(result).toMatchObject(templateData);
+    });
+
+    it('allows the creator to get an unpublished template', async () => {
+        const templateData = { title: 'Unpublished Template', status: 'unpublished', creator: { uid: 'u1' } };
+        firestore.getDoc.mockResolvedValueOnce({ exists: () => true, data: () => templateData });
+        const result = await getTemplate('tid', 'u1');
+        expect(result).toMatchObject(templateData);
+    });
+
+    it('prevents an unauthenticated user from getting an unpublished template', async () => {
+        const templateData = { title: 'Unpublished Template', status: 'unpublished', creator: { uid: 'u1' } };
+        firestore.getDoc.mockResolvedValueOnce({ exists: () => true, data: () => templateData });
+        await expect(getTemplate('tid')).rejects.toThrow('You do not have permission to view this template.');
+    });
+
+    it('prevents a different user from getting an unpublished template', async () => {
+        const templateData = { title: 'Unpublished Template', status: 'unpublished', creator: { uid: 'u1' } };
+        firestore.getDoc.mockResolvedValueOnce({ exists: () => true, data: () => templateData });
+        await expect(getTemplate('tid', 'u2')).rejects.toThrow('You do not have permission to view this template.');
+    });
+
+    it('gets templates and filters by published status', async () => {
+        await getTemplates();
+        expect(firestore.query).toHaveBeenCalledWith(
+            expect.anything(),
+            firestore.where('status', '==', 'published'),
+            firestore.orderBy('title'),
+            firestore.limit(10)
+        );
     });
 
     it('gets templates with pagination (lastVisible)', async () => {
@@ -132,6 +173,7 @@ describe('templates service', () => {
         await getTemplates(10, mockLastVisible);
         expect(firestore.query).toHaveBeenCalledWith(
             expect.anything(),
+            firestore.where('status', '==', 'published'),
             firestore.orderBy('title'),
             firestore.startAfter(mockLastVisible),
             firestore.limit(10)
@@ -141,6 +183,28 @@ describe('templates service', () => {
     it('throws on error when getting templates', async () => {
         firestore.getDocs.mockRejectedValueOnce(new Error('Firestore error'));
         await expect(getTemplates()).rejects.toThrow('Firestore error');
+    });
+
+    it('gets user templates', async () => {
+        await getUserTemplates('u1');
+        expect(firestore.query).toHaveBeenCalledWith(
+            expect.anything(),
+            firestore.where('creator.uid', '==', 'u1'),
+            firestore.orderBy('title')
+        );
+    });
+
+    it('throws if no user ID is provided to getUserTemplates', async () => {
+        await expect(getUserTemplates(null)).rejects.toThrow('User ID is required');
+    });
+
+    it('sets template status', async () => {
+        await expect(setTemplateStatus('tid', 'published')).resolves.toBeUndefined();
+        expect(firestore.updateDoc).toHaveBeenCalledWith(expect.anything(), { status: 'published' });
+    });
+
+    it('throws on invalid status for setTemplateStatus', async () => {
+        await expect(setTemplateStatus('tid', 'invalidStatus')).rejects.toThrow('Invalid status');
     });
 
     it('adds a template item with various field types', async () => {

@@ -1,4 +1,4 @@
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, query, orderBy, limit, startAfter, increment } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, query, orderBy, limit, startAfter, increment, where } from 'firebase/firestore';
 import { app } from '../firebase';
 
 // Initialize Firestore
@@ -50,6 +50,7 @@ export const createTemplate = async (templateData, user) => {
                 photoURL: user.photoURL || ''
             },
             contributors: [],
+            status: 'unpublished',
         };
         const docRef = await addDoc(collection(db, 'templates'), template);
         console.log('Template created with ID:', docRef.id);
@@ -104,12 +105,24 @@ export const deleteTemplate = async (templateId) => {
 };
 
 // Function to get a specific template by ID
-export const getTemplate = async (templateId) => {
+export const getTemplate = async (templateId, userId = null) => {
     try {
         const templateRef = doc(db, 'templates', templateId);
         const docSnap = await getDoc(templateRef);
         if (docSnap.exists()) {
-            return { id: docSnap.id, ...docSnap.data() };
+            const template = { id: docSnap.id, ...docSnap.data() };
+            console.log(userId, template.creator?.uid, template.status);
+            if (template.status === 'published' || template.status === 'private') {
+                return template;
+            }
+
+            if (template.status === 'unpublished') {
+                if (userId && template.creator && template.creator.uid === userId) {
+                    return template;
+                }
+            }
+            throw new Error('You do not have permission to view this template.');
+
         } else {
             throw new Error('Template not found');
         }
@@ -122,9 +135,9 @@ export const getTemplate = async (templateId) => {
 // Function to get a page of templates (paginated)
 export const getTemplates = async (pageSize = 10, lastVisible = null) => {
     try {
-        let q = query(collection(db, 'templates'), orderBy('title'), limit(pageSize));
+        let q = query(collection(db, 'templates'), where('status', '==', 'published'), orderBy('title'), limit(pageSize));
         if (lastVisible) {
-            q = query(collection(db, 'templates'), orderBy('title'), startAfter(lastVisible), limit(pageSize));
+            q = query(collection(db, 'templates'), where('status', '==', 'published'), orderBy('title'), startAfter(lastVisible), limit(pageSize));
         }
         const querySnapshot = await getDocs(q);
         const templates = [];
@@ -135,6 +148,40 @@ export const getTemplates = async (pageSize = 10, lastVisible = null) => {
         return { templates, lastVisible: newLastVisible };
     } catch (error) {
         console.error('Error getting templates:', error);
+        throw error;
+    }
+};
+
+// Function to get all templates for a specific user
+export const getUserTemplates = async (userId) => {
+    try {
+        if (!userId) {
+            throw new Error('User ID is required to fetch user templates.');
+        }
+        const q = query(collection(db, 'templates'), where('creator.uid', '==', userId), orderBy('title'));
+        const querySnapshot = await getDocs(q);
+        const templates = [];
+        querySnapshot.forEach((doc) => {
+            templates.push({ id: doc.id, ...doc.data() });
+        });
+        return templates;
+    } catch (error) {
+        console.error('Error getting user templates:', error);
+        throw error;
+    }
+};
+
+// Function to set the publication status of a template
+export const setTemplateStatus = async (templateId, status) => {
+    try {
+        if (!['unpublished', 'private', 'published'].includes(status)) {
+            throw new Error('Invalid status. Must be one of: unpublished, private, published.');
+        }
+        const templateRef = doc(db, 'templates', templateId);
+        await updateDoc(templateRef, { status });
+        console.log(`Template ${templateId} status updated to ${status}`);
+    } catch (error) {
+        console.error('Error updating template status:', error);
         throw error;
     }
 };

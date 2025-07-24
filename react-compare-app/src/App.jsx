@@ -7,11 +7,12 @@ import { CreateComparisonForm } from './components/comparison/CreateComparisonFo
 import { ComparisonView } from './components/comparison/ComparisonView';
 import { EditComparisonForm } from './components/comparison/EditComparisonForm';
 import { TermsPage } from './components/pages/TermsPage';
+import UserTemplatesPage from './components/pages/UserTemplatesPage';
 import { LoginModal } from './components/auth/LoginModal';
 import { SignUpModal } from './components/auth/SignUpModal';
 import { Routes, Route, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { getTemplates, getTemplate } from './services/templates'
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Main App Component
 const App = () => {
@@ -81,6 +82,7 @@ const App = () => {
     // Helper to get comparison by ID from URL param
     const ComparisonViewWrapper = () => {
         const { id } = useParams();
+        const { currentUser } = useAuth();
         const [comparison, setComparison] = React.useState(null);
         const [loading, setLoading] = React.useState(true);
         const [error, setError] = React.useState(null);
@@ -89,7 +91,7 @@ const App = () => {
         React.useEffect(() => {
             setLoading(true);
             setError(null);
-            getTemplate(id)
+            getTemplate(id, currentUser ? currentUser.uid : null)
                 .then((data) => {
                     setComparison(data);
                     setLoading(false);
@@ -98,7 +100,7 @@ const App = () => {
                     setError(err.message);
                     setLoading(false);
                 });
-        }, [id]);
+        }, [id, currentUser]);
 
         if (loading) {
             return <div className="text-center p-12 text-slate-500">Loading...</div>;
@@ -132,6 +134,7 @@ const App = () => {
                         <Route path="/compare/:id" element={<ComparisonViewWrapper />} />
                         <Route path="/compare/:id/edit" element={<EditComparisonFormWrapper />} />
                         <Route path="/terms" element={<TermsPage onBack={() => navigate('/')} />} />
+                        <Route path="/my-templates" element={<UserTemplatesPage />} />
                     </Routes>
                 </main>
                 {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} onShowSignUp={() => { setIsLoginModalOpen(false); setIsSignUpModalOpen(true); }} />}
