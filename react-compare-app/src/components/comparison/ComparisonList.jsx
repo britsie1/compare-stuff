@@ -5,6 +5,7 @@ import { timeAgo } from '../../utils/time';
 import FavoriteButton from '../ui/FavoriteButton';
 import { LoginModal } from '../auth/LoginModal';
 import ViewCount from '../ui/ViewCount';
+import ComparisonListItem from './ComparisonListItem';
 
 const ComparisonList = ({ comparisons, onCreate, onView }) => {
     const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
@@ -23,23 +24,12 @@ const ComparisonList = ({ comparisons, onCreate, onView }) => {
         {comparisons.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {comparisons.map(comp => (
-                    <div key={comp.id} className="bg-white rounded-lg shadow-lg flex flex-col overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 ease-in-out cursor-pointer" onClick={() => onView(comp.id)}>
-                        <img src={comp.imageUrl} alt={comp.title} className="w-full h-48 object-cover"/>
-                        <div className="p-6 flex flex-col flex-grow">
-                            <h2 className="text-xl font-bold text-slate-800 mb-2">{comp.title}</h2>
-                            <p className="text-slate-600 text-sm mb-4 flex-grow">{comp.description}</p>
-                            <div className="flex justify-between items-center text-sm text-slate-500 mt-auto pt-4 border-t border-slate-100">
-                                <div className="flex items-center gap-4">
-                                    <FavoriteButton templateId={comp.id} favorites={comp.favorites} onLoginRequest={() => setIsLoginModalOpen(true)} />
-                                    <ViewCount templateId={comp.id} views={comp.views} />
-                                </div>
-                                <div className="flex items-center">
-                                    <Clock className="w-4 h-4 mr-1.5" />
-                                    <span>Updated {timeAgo(comp.lastUpdated)}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <ComparisonListItem
+                        key={comp.id}
+                        comparison={comp}
+                        onView={onView}
+                        onLoginRequest={() => setIsLoginModalOpen(true)}
+                    />
                 ))}
             </div>
         ) : (

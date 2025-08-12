@@ -414,7 +414,7 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                                                         }
                                                     }
                                                     case 'imageUrl':
-                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value ? <img src={value} alt={fieldLabel} className="h-16 w-16 object-cover mx-auto rounded" /> : <span className="text-slate-400">-</span>)}</td>;
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value ? <img src={value} alt={fieldLabel} className=" object-cover mx-auto rounded" /> : <span className="text-slate-400">-</span>)}</td>;
                                                     default:
                                                         return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value)}</td>;
                                                 }
