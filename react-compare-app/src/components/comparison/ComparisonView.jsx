@@ -7,6 +7,7 @@ import { getTemplateItems, addTemplateItem, updateTemplateItem, deleteTemplateIt
 import FavoriteButton from '../ui/FavoriteButton';
 import ViewCount from '../ui/ViewCount';
 import { timeAgo } from '../../utils/time';
+import CommentsSection from '../comments/CommentsSection';
 
 const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -302,7 +303,7 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
 
             <div id="sticky-header-placeholder" className="sticky top-0 z-100 visibility-hidden diplay-none"></div>
             {/* Comparison Table */}
-            <div id="table-container" className="table-container overflow-x-auto bg-white rounded-lg shadow-lg">
+            <div id="table-container" className="table-container overflow-x-auto bg-white rounded-lg shadow-lg mb-8">
                 {itemsToDisplay.length > 0 ? (
                     <table id="main-table" className="w-full">
                         <thead>
@@ -459,6 +460,7 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                     {hintTooltip.text}
                 </div>
             )}
+            <CommentsSection templateId={templateId} />
         </div>
     );
 };
