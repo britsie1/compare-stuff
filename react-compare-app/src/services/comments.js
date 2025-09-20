@@ -1,4 +1,4 @@
-import { getFirestore, collection, query, where, getDocs, addDoc, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, query, getDocs, addDoc, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { app } from '../firebase';
 
 // Initialize Firestore

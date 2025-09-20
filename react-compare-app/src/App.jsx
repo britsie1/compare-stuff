@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useFirebaseAuth } from './hooks/useFirebaseAuth';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { ComparisonList } from './components/comparison/ComparisonList';
@@ -10,23 +9,24 @@ import { TermsPage } from './components/pages/TermsPage';
 import UserTemplatesPage from './components/pages/UserTemplatesPage';
 import { LoginModal } from './components/auth/LoginModal';
 import { SignUpModal } from './components/auth/SignUpModal';
-import { Routes, Route, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import { getTemplate } from './services/templates'
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { useAuth } from './context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 
 // Main App Component
 const App = () => {
-    const { user, loading, logout } = useFirebaseAuth();
+    const { currentUser, loading, logout } = useAuth();
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
+    const [comparisons, setComparisons] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (user && isLoginModalOpen) {
+        if (currentUser && isLoginModalOpen) {
             setIsLoginModalOpen(false);
         }
-    }, [user, isLoginModalOpen]);
+    }, [currentUser, isLoginModalOpen]);
 
     const handleLogout = async () => {
         try {
@@ -111,24 +111,22 @@ const App = () => {
     };
 
     return (
-        <AuthProvider>
-            <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col">
-                <Navbar user={user} onLoginClick={() => setIsLoginModalOpen(true)} logout={handleLogout} navigate={navigate} />
-                <main className="p-2 md:p-8 flex-grow">
-                    <Routes>
-                        <Route path="/" element={<ComparisonList onCreate={() => navigate('/create')} onView={id => navigate(`/compare/${id}`)} />} />
-                        <Route path="/create" element={<CreateComparisonForm onSubmit={handleCreateComparison} onCancel={() => navigate('/')} />} />
-                        <Route path="/compare/:id" element={<ComparisonViewWrapper />} />
-                        <Route path="/compare/:id/edit" element={<EditComparisonFormWrapper />} />
-                        <Route path="/terms" element={<TermsPage onBack={() => navigate('/')} />} />
-                        <Route path="/my-templates" element={<UserTemplatesPage />} />
-                    </Routes>
-                </main>
-                {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} onShowSignUp={() => { setIsLoginModalOpen(false); setIsSignUpModalOpen(true); }} />}
-                {isSignUpModalOpen && <SignUpModal onClose={() => setIsSignUpModalOpen(false)} />}
-                <Footer navigate={navigate} />
-            </div>
-        </AuthProvider>
+        <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col">
+            <Navbar user={currentUser} onLoginClick={() => setIsLoginModalOpen(true)} logout={handleLogout} navigate={navigate} />
+            <main className="p-2 md:p-8 flex-grow">
+                <Routes>
+                    <Route path="/" element={<ComparisonList onCreate={() => navigate('/create')} onView={id => navigate(`/compare/${id}`)} />} />
+                    <Route path="/create" element={<CreateComparisonForm onSubmit={handleCreateComparison} onCancel={() => navigate('/')} />} />
+                    <Route path="/compare/:id" element={<ComparisonViewWrapper />} />
+                    <Route path="/compare/:id/edit" element={<EditComparisonFormWrapper />} />
+                    <Route path="/terms" element={<TermsPage onBack={() => navigate('/')} />} />
+                    <Route path="/my-templates" element={<UserTemplatesPage />} />
+                </Routes>
+            </main>
+            {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} onShowSignUp={() => { setIsLoginModalOpen(false); setIsSignUpModalOpen(true); }} />}
+            {isSignUpModalOpen && <SignUpModal onClose={() => setIsSignUpModalOpen(false)} />}
+            <Footer navigate={navigate} />
+        </div>
     );
 };
 

@@ -12,3 +12,11 @@ Object.defineProperty(global, 'import.meta', {
   },
   writable: true,
 });
+
+// Add DOM matchers from @testing-library/jest-dom
+try {
+  require('@testing-library/jest-dom');
+} catch {
+  // If the package isn't installed, tests will still run but DOM matchers won't be available.
+  // This catch keeps the setup file safe in environments where the package isn't present.
+}

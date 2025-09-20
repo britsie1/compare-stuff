@@ -1,5 +1,11 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
+import { 
+    onAuthStateChanged,
+    signInWithPopup,
+    GoogleAuthProvider,
+    FacebookAuthProvider,
+    signOut
+} from 'firebase/auth';
 import { auth } from '../services/auth'; // Adjust path if auth.js is in a different location
 
 const AuthContext = React.createContext();
@@ -32,10 +38,45 @@ export function AuthProvider({ children }) {
     return unsubscribe; // Cleanup subscription on unmount
   }, []);
 
-  const value = { currentUser };
+  const signInWithGoogle = async () => {
+    try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+    } catch (error) {
+        console.error('Google sign-in error:', error);
+        throw error;
+    }
+  };
+
+  const signInWithFacebook = async () => {
+      try {
+          const provider = new FacebookAuthProvider();
+          await signInWithPopup(auth, provider);
+      } catch (error) {
+          console.error('Facebook sign-in error:', error);
+          throw error;
+      }
+  };
+
+  const logout = async () => {
+      try {
+          await signOut(auth);
+      } catch (error) {
+          console.error('Logout error:', error);
+          throw error;
+      }
+  };
+
+  const value = { 
+    currentUser,
+    loading,
+    signInWithGoogle,
+    signInWithFacebook,
+    logout
+  };
 
   return (
-    <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
 }
 

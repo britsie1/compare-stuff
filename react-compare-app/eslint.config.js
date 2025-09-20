@@ -5,15 +5,26 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
   { ignores: ['dist'] },
+  // Flat config uses an array of config objects. Create a specific config
+  // entry for test files instead of using the legacy `overrides` key.
   {
-    "overrides": [
-      {
-        "files": ["**/*.test.js", "**/*.test.jsx"],
-        "env": {
-          "jest": true,
-        },
-      }
-    ]
+    files: ['**/*.test.js', '**/*.test.jsx'],
+    languageOptions: {
+      globals: globals.jest,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+  },
+  // Mocks and test helper files (CommonJS + jest globals)
+  {
+    files: ['__mocks__/**', 'jest.setup.js'],
+    languageOptions: {
+      globals: { ...globals.jest, ...globals.node },
+      ecmaVersion: 'latest',
+    },
   },
   {
     files: ['**/*.{js,jsx}'],
