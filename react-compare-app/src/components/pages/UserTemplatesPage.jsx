@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { setTemplateStatus, getUserTemplates } from '../../services/templates';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/authHooks';
 import ComparisonListItem from '../comparison/ComparisonListItem';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 

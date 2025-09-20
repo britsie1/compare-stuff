@@ -3,7 +3,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
 import { createTemplate } from '../../services/templates';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/authHooks';
 import TemplateFieldsEditor from './TemplateFieldsEditor';
 import { v4 as uuidv4 } from 'uuid';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

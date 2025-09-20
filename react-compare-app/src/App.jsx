@@ -11,7 +11,7 @@ import { LoginModal } from './components/auth/LoginModal';
 import { SignUpModal } from './components/auth/SignUpModal';
 import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import { getTemplate } from './services/templates'
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './context/authHooks';
 import { useQuery } from '@tanstack/react-query';
 
 // Main App Component

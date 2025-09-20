@@ -6,7 +6,7 @@ import { deleteTemplate, updateTemplate } from '../../services/templates';
 import TemplateFieldsEditor from './TemplateFieldsEditor';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/authHooks';
 
 const EditComparisonForm = ({ comparison, onCancel }) => {
     const [title, setTitle] = useState(comparison.title);

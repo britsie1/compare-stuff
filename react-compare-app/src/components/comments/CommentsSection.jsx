@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronUp, ChevronDown, ThumbsUp, Flag, MessageSquare } from 'lucide-react';
 import { timeAgo } from '../../utils/time';
 import { getComments, addComment, addReply, updateComment } from '../../services/comments';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/authHooks';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Renders text with highlighted @mentions

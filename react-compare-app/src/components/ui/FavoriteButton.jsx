@@ -1,7 +1,7 @@
 import React from 'react';
 import { Heart } from 'lucide-react';
 import { favoriteTemplate, unfavoriteTemplate } from '../../services/templates';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/authHooks';
 
 const FavoriteButton = ({ templateId, favorites, className = '', onLoginRequest }) => {
     const { currentUser } = useAuth();
