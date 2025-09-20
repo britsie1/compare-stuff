@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
-import { AuthProvider, useAuth } from './AuthContext';
+import { AuthProvider } from './AuthProvider';
+import { useAuth } from './authHooks';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 
 // Mock firebase/auth
