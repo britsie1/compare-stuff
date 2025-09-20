@@ -1,14 +1,27 @@
 import React from 'react';
-import { Plus, Clock } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { timeAgo } from '../../utils/time';
-import FavoriteButton from '../ui/FavoriteButton';
 import { LoginModal } from '../auth/LoginModal';
-import ViewCount from '../ui/ViewCount';
 import ComparisonListItem from './ComparisonListItem';
+import { useQuery } from '@tanstack/react-query';
+import { getTemplates } from '../../services/templates';
 
-const ComparisonList = ({ comparisons, onCreate, onView }) => {
+const ComparisonList = ({ onCreate, onView }) => {
     const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
+    const { data, isLoading, isError, error } = useQuery({
+        queryKey: ['templates'],
+        queryFn: () => getTemplates(10),
+    });
+
+    if (isLoading) {
+        return <div className="text-center py-10">Loading comparisons...</div>;
+    }
+
+    if (isError) {
+        return <div className="text-center py-10 text-red-500">Error: {error.message}</div>;
+    }
+
+    const comparisons = data?.templates || [];
 
     return (
     <div className="max-w-7xl mx-auto">

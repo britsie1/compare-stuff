@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ChevronUp, ChevronDown, ThumbsUp, Flag, MessageSquare } from 'lucide-react';
 import { timeAgo } from '../../utils/time';
 import { getComments, addComment, addReply, updateComment } from '../../services/comments';
 import { useAuth } from '../../context/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Renders text with highlighted @mentions
 const renderTextWithMentions = (text) => {
@@ -53,7 +54,7 @@ const CommentForm = ({ onSubmit, placeholder = "Add a public comment...", cta = 
 
 
 // Represents a single comment or reply
-const Comment = ({ comment, onUpdate, onAddReply, templateId }) => {
+const Comment = ({ comment, onUpdate, onAddReply }) => {
     const [isReplying, setIsReplying] = useState(false);
     const [areRepliesVisible, setAreRepliesVisible] = useState(true);
     const { currentUser } = useAuth();
@@ -171,7 +172,7 @@ const Comment = ({ comment, onUpdate, onAddReply, templateId }) => {
                            {areRepliesVisible ? <ChevronUp size={14}/> : <ChevronDown size={14} />}
                            <span>{areRepliesVisible ? 'Hide Replies' : `View ${comment.replies.length} Replies`}</span>
                         </button>
-                        {areRepliesVisible && <CommentList comments={comment.replies} onUpdate={onUpdate} onAddReply={onAddReply} isReplyList templateId={templateId} />}
+                        {areRepliesVisible && <CommentList comments={comment.replies} onUpdate={onUpdate} onAddReply={onAddReply} isReplyList />}
                     </div>
                 )}
             </div>
@@ -181,11 +182,11 @@ const Comment = ({ comment, onUpdate, onAddReply, templateId }) => {
 
 
 // Represents the list of comments
-const CommentList = ({ comments, onUpdate, onAddReply, isReplyList = false, templateId }) => {
+const CommentList = ({ comments, onUpdate, onAddReply, isReplyList = false }) => {
     return (
         <div className={`space-y-6 ${isReplyList ? 'pl-6 border-l-2 border-gray-200' : ''}`}>
             {comments.map(comment => (
-                <Comment key={comment.id} comment={comment} onUpdate={onUpdate} onAddReply={onAddReply} templateId={templateId} />
+                <Comment key={comment.id} comment={comment} onUpdate={onUpdate} onAddReply={onAddReply} />
             ))}
         </div>
     );
@@ -193,35 +194,46 @@ const CommentList = ({ comments, onUpdate, onAddReply, isReplyList = false, temp
 
 
 // --- MAIN COMPONENT ---
-
 const CommentsSection = ({ templateId }) => {
-    const [comments, setComments] = useState([]);
-    const [loading, setLoading] = useState(true);
     const { currentUser } = useAuth();
+    const queryClient = useQueryClient();
 
-    useEffect(() => {
-        const fetchComments = async () => {
-            setLoading(true);
-            const fetchedComments = await getComments(templateId);
-            setComments(fetchedComments);
-            setLoading(false);
-        };
-        fetchComments();
-    }, [templateId]);
+    const { data: comments, isLoading } = useQuery({
+        queryKey: ['comments', templateId],
+        queryFn: () => getComments(templateId),
+        initialData: [],
+    });
 
-    const handleUpdateComment = async (commentId, updates) => {
-        await updateComment(templateId, commentId, updates);
-        // For optimistic UI update, we can update the state directly.
-        // The recursive update logic is kept for this.
-        setComments(prevComments => updateCommentRecursive(prevComments, commentId, updates));
+    const updateMutation = useMutation({
+        mutationFn: ({ commentId, updates }) => updateComment(templateId, commentId, updates),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['comments', templateId]);
+        },
+    });
+
+    const addReplyMutation = useMutation({
+        mutationFn: ({ parentId, replyData }) => addReply(templateId, parentId, replyData),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['comments', templateId]);
+        },
+    });
+
+    const addCommentMutation = useMutation({
+        mutationFn: (commentData) => addComment(templateId, commentData),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['comments', templateId]);
+        },
+    });
+
+    const handleUpdateComment = (commentId, updates) => {
+        updateMutation.mutate({ commentId, updates });
     };
     
-    const handleAddReply = async (parentId, replyData) => {
-        const newReply = await addReply(templateId, parentId, replyData);
-        setComments(prevComments => addReplyRecursive(prevComments, parentId, newReply));
+    const handleAddReply = (parentId, replyData) => {
+        addReplyMutation.mutate({ parentId, replyData });
     };
 
-    const handleAddTopLevelComment = async (text) => {
+    const handleAddTopLevelComment = (text) => {
         if (!currentUser) {
             alert("Please log in to comment.");
             return;
@@ -237,11 +249,10 @@ const CommentsSection = ({ templateId }) => {
             userFlagged: false,
             replies: []
         };
-        const newComment = await addComment(templateId, newCommentData);
-        setComments(prevComments => [newComment, ...prevComments]);
+        addCommentMutation.mutate(newCommentData);
     };
 
-    if (loading) {
+    if (isLoading) {
         return <div>Loading comments...</div>;
     }
 
@@ -259,7 +270,7 @@ const CommentsSection = ({ templateId }) => {
                 </div>
 
                 <div className="mt-8">
-                    <CommentList comments={comments} onUpdate={handleUpdateComment} onAddReply={handleAddReply} templateId={templateId} />
+                    <CommentList comments={comments} onUpdate={handleUpdateComment} onAddReply={handleAddReply} />
                 </div>
             </div>
         </div>
@@ -267,32 +278,3 @@ const CommentsSection = ({ templateId }) => {
 };
 
 export default CommentsSection;
-
-
-// --- UTILITY FUNCTIONS FOR STATE UPDATE (kept for optimistic UI) ---
-
-// Recursive function to update a comment or reply anywhere in the nested structure
-const updateCommentRecursive = (commentsList, commentId, updates) => {
-    return commentsList.map(comment => {
-        if (comment.id === commentId) {
-            return { ...comment, ...updates };
-        }
-        if (comment.replies && comment.replies.length > 0) {
-            return { ...comment, replies: updateCommentRecursive(comment.replies, commentId, updates) };
-        }
-        return comment;
-    });
-};
-
-// Recursive function to add a reply to a specific comment
-const addReplyRecursive = (commentsList, parentId, newReply) => {
-    return commentsList.map(comment => {
-        if (comment.id === parentId) {
-            return { ...comment, replies: [...(comment.replies || []), newReply] };
-        }
-        if (comment.replies && comment.replies.length > 0) {
-            return { ...comment, replies: addReplyRecursive(comment.replies, parentId, newReply) };
-        }
-        return comment;
-    });
-};

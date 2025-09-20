@@ -6,15 +6,29 @@ import { createTemplate } from '../../services/templates';
 import { useFirebaseAuth } from '../../hooks/useFirebaseAuth';
 import TemplateFieldsEditor from './TemplateFieldsEditor';
 import { v4 as uuidv4 } from 'uuid';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const CreateComparisonForm = ({ onSubmit, onCancel }) => {
     const { user } = useFirebaseAuth();
+    const queryClient = useQueryClient();
     const [title, setTitle] = useState('');
     const [imageUrl, setImageUrl] = useState('');
     const [description, setDescription] = useState('');
     const [fields, setFields] = useState([{ type: 'field', value: '', fieldType: 'text', id: uuidv4() }]);
 
-    const handleSubmit = async (e) => {
+    const mutation = useMutation({
+        mutationFn: (templateData) => createTemplate(templateData, user),
+        onSuccess: (createdTemplate) => {
+            queryClient.invalidateQueries(['templates']);
+            queryClient.invalidateQueries(['userTemplates', user?.uid]);
+            if (onSubmit) onSubmit(createdTemplate);
+        },
+        onError: (error) => {
+            alert('Failed to create template: ' + error.message);
+        }
+    });
+
+    const handleSubmit = (e) => {
         e.preventDefault();
         const finalFields = fields.map(f => ({ ...f, value: f.value.trim() })).filter(f => f.value !== '');
         if (title.trim() && finalFields.length > 0) {
@@ -24,12 +38,7 @@ const CreateComparisonForm = ({ onSubmit, onCancel }) => {
                 description,
                 templateFields: finalFields
             };
-            try {
-                const createdTemplate = await createTemplate(templateData, user);
-                if (onSubmit) onSubmit(createdTemplate);
-            } catch (error) {
-                alert('Failed to create template: ' + error.message);
-            }
+            mutation.mutate(templateData);
         } else {
             alert('Please provide a title and at least one field.');
         }
@@ -54,7 +63,9 @@ const CreateComparisonForm = ({ onSubmit, onCancel }) => {
                 <TemplateFieldsEditor fields={fields} setFields={setFields} />
                 <div className="flex justify-end gap-4 pt-4">
                     <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-                    <Button type="submit">Create Template</Button>
+                    <Button type="submit" disabled={mutation.isPending}>
+                        {mutation.isPending ? 'Creating...' : 'Create Template'}
+                    </Button>
                 </div>
             </form>
         </div>

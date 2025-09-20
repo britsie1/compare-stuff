@@ -4,7 +4,9 @@ import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
 import { deleteTemplate, updateTemplate } from '../../services/templates';
 import TemplateFieldsEditor from './TemplateFieldsEditor';
-import {useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../../context/AuthContext';
 
 const EditComparisonForm = ({ comparison, onCancel }) => {
     const [title, setTitle] = useState(comparison.title);
@@ -13,8 +15,9 @@ const EditComparisonForm = ({ comparison, onCancel }) => {
     const [fields, setFields] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const { currentUser } = useAuth();
 
-    // Initialize fields with correct structure (type, value, fieldType, id)
     useEffect(() => {
         setFields(
             (comparison.templateFields || []).map(f => {
@@ -32,7 +35,32 @@ const EditComparisonForm = ({ comparison, onCancel }) => {
         );
     }, [comparison.templateFields]);
 
-    const handleSubmit = async (e) => {
+    const updateMutation = useMutation({
+        mutationFn: (updatedData) => updateTemplate(comparison.id, updatedData),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['template', comparison.id]);
+            queryClient.invalidateQueries(['templates']);
+            queryClient.invalidateQueries(['userTemplates', currentUser?.uid]);
+            if (onCancel) onCancel();
+        },
+        onError: (error) => {
+            alert('Failed to update template: ' + error.message);
+        }
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: () => deleteTemplate(comparison.id),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['templates']);
+            queryClient.invalidateQueries(['userTemplates', currentUser?.uid]);
+            navigate('/');
+        },
+        onError: (error) => {
+            alert('Failed to delete template: ' + error.message);
+        }
+    });
+
+    const handleSubmit = (e) => {
         e.preventDefault();
         const finalFields = fields
             .map(f => {
@@ -44,31 +72,21 @@ const EditComparisonForm = ({ comparison, onCancel }) => {
             })
             .filter(f => f.value !== '');
         if (title.trim() && finalFields.length > 0) {
-            try {
-                await updateTemplate(comparison.id, {
-                    title,
-                    imageUrl,
-                    description,
-                    templateFields: finalFields,
-                    lastUpdated: new Date().toISOString(),
-                });
-                if (onCancel) onCancel();
-            } catch (error) {
-                alert('Failed to update template: ' + error.message);
-            }
+            updateMutation.mutate({
+                title,
+                imageUrl,
+                description,
+                templateFields: finalFields,
+                lastUpdated: new Date().toISOString(),
+            });
         } else {
             alert('Please provide a title and at least one field.');
         }
     };
 
-    const handleDelete = async () => {
+    const handleDelete = () => {
         setShowDeleteConfirm(false);
-        try {
-            await deleteTemplate(comparison.id);
-            navigate('/');
-        } catch (error) {
-            alert('Failed to delete template: ' + error.message);
-        }
+        deleteMutation.mutate();
     };
 
     return (
@@ -89,9 +107,13 @@ const EditComparisonForm = ({ comparison, onCancel }) => {
                 </div>
                 <TemplateFieldsEditor fields={fields} setFields={setFields} />
                 <div className="flex justify-end gap-4 pt-4">
-                    <Button type="button" variant="destructive" onClick={() => setShowDeleteConfirm(true)}>Delete</Button>
+                    <Button type="button" variant="destructive" onClick={() => setShowDeleteConfirm(true)} disabled={deleteMutation.isPending}>
+                        {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                    </Button>
                     <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-                    <Button type="submit">Save Changes</Button>
+                    <Button type="submit" disabled={updateMutation.isPending}>
+                        {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                    </Button>
                 </div>
             </form>
             {showDeleteConfirm && (

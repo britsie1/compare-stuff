@@ -11,38 +11,16 @@ import UserTemplatesPage from './components/pages/UserTemplatesPage';
 import { LoginModal } from './components/auth/LoginModal';
 import { SignUpModal } from './components/auth/SignUpModal';
 import { Routes, Route, useNavigate, useParams, useLocation } from 'react-router-dom';
-import { getTemplates, getTemplate } from './services/templates'
+import { getTemplate } from './services/templates'
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 
 // Main App Component
 const App = () => {
-    const [comparisons, setComparisons] = useState([]);
     const { user, loading, logout } = useFirebaseAuth();
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
     const navigate = useNavigate();
-    const location = useLocation();
-
-    // Fetch templates (used in both initial load and on navigation back to list)
-    const fetchTemplates = async () => {
-        try {
-            const { templates } = await getTemplates(10);
-            setComparisons(templates);
-        } catch (error) {
-            console.error('Failed to fetch templates:', error);
-        }
-    };
-
-    useEffect(() => {
-        fetchTemplates();
-    }, []);
-
-    // Refetch templates when navigating back to the list view
-    useEffect(() => {
-        if (location.pathname === '/') {
-            fetchTemplates();
-        }
-    }, [location.pathname]);
 
     useEffect(() => {
         if (user && isLoginModalOpen) {
@@ -116,7 +94,16 @@ const App = () => {
 
     const EditComparisonFormWrapper = () => {
         const { id } = useParams();
-        const comparison = comparisons.find(c => c.id === id);
+        const { data: comparison, isLoading } = useQuery({
+            queryKey: ['template', id],
+            queryFn: () => getTemplate(id),
+            enabled: !!id,
+        });
+
+        if (isLoading) {
+            return <div className="text-center p-12 text-slate-500">Loading...</div>;
+        }
+
         if (!comparison) {
             return <div className="text-center p-12 text-slate-500">Comparison not found.</div>;
         }
@@ -129,7 +116,7 @@ const App = () => {
                 <Navbar user={user} onLoginClick={() => setIsLoginModalOpen(true)} logout={handleLogout} navigate={navigate} />
                 <main className="p-2 md:p-8 flex-grow">
                     <Routes>
-                        <Route path="/" element={<ComparisonList comparisons={comparisons} onCreate={() => navigate('/create')} onView={id => navigate(`/compare/${id}`)} />} />
+                        <Route path="/" element={<ComparisonList onCreate={() => navigate('/create')} onView={id => navigate(`/compare/${id}`)} />} />
                         <Route path="/create" element={<CreateComparisonForm onSubmit={handleCreateComparison} onCancel={() => navigate('/')} />} />
                         <Route path="/compare/:id" element={<ComparisonViewWrapper />} />
                         <Route path="/compare/:id/edit" element={<EditComparisonFormWrapper />} />
