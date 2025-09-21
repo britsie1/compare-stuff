@@ -1,12 +1,78 @@
-# React + Vite
+# React Compare App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a web application that allows users to create, view, and share comparison tables. Users can define templates with custom fields and then create comparisons based on those templates. It's built using React, Vite, and Firebase.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+*   User authentication (Sign up, Login)
+*   Create custom comparison templates
+*   Create comparison tables based on templates
+*   Add items with details to comparison tables
+*   View and compare items in a table format
+*   Comment on comparisons
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+
+### Prerequisites
+
+*   [Node.js](https://nodejs.org/) (v18 or later recommended)
+*   npm (comes with Node.js)
+
+### Installation
+
+1.  Clone the repository:
+    ```sh
+    git clone https://github.com/britsie1/compare-stuff.git
+    ```
+2.  Navigate to the project directory:
+    ```sh
+    cd react-compare-app
+    ```
+3.  Install the dependencies:
+    ```sh
+    npm install
+    ```
+
+### Configuration
+
+The project uses Firebase for backend services like authentication and database. You need to set up your own Firebase project to get the configuration credentials.
+
+1.  Go to the [Firebase Console](https://console.firebase.google.com/).
+2.  Create a new project.
+3.  In your project, go to Project Settings and add a new web app.
+4.  You will be given a `firebaseConfig` object.
+5.  Create a file `src/config/firebaseConfig.js` and add your configuration like this:
+
+    ```javascript
+    // src/config/firebaseConfig.js
+    export const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    ```
+
+### Running the Application
+
+*   To run the app in development mode:
+    ```sh
+    npm run dev
+    ```
+    This will start the Vite development server, and you can view the application at `http://localhost:5173`.
+
+*   To build the app for production:
+    ```sh
+    npm run build
+    ```
+    This will create a `dist` folder with the production-ready files.
+
+*   To run the tests:
+    ```sh
+    npm run test
+    ```
+    This will run the tests using Jest.
