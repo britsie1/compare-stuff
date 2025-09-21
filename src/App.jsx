@@ -7,6 +7,7 @@ import { ComparisonView } from './components/comparison/ComparisonView';
 import { EditComparisonForm } from './components/comparison/EditComparisonForm';
 import { TermsPage } from './components/pages/TermsPage';
 import UserTemplatesPage from './components/pages/UserTemplatesPage';
+import NotificationsPage from './components/pages/NotificationsPage';
 import { LoginModal } from './components/auth/LoginModal';
 import { SignUpModal } from './components/auth/SignUpModal';
 import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
@@ -121,6 +122,7 @@ const App = () => {
                     <Route path="/compare/:id/edit" element={<EditComparisonFormWrapper />} />
                     <Route path="/terms" element={<TermsPage onBack={() => navigate('/')} />} />
                     <Route path="/my-templates" element={<UserTemplatesPage />} />
+                    <Route path="/notifications" element={<NotificationsPage />} />
                 </Routes>
             </main>
             {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} onShowSignUp={() => { setIsLoginModalOpen(false); setIsSignUpModalOpen(true); }} />}
