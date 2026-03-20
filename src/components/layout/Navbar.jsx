@@ -25,7 +25,11 @@ const Navbar = ({ user, onLoginClick, logout, navigate, darkMode, toggleDarkMode
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo/Brand */}
-                    <div className="flex-shrink-0 cursor-pointer flex items-center" onClick={() => navigate('/')}>
+                    <button
+                        className="flex-shrink-0 cursor-pointer flex items-center focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg p-1"
+                        onClick={() => navigate('/')}
+                        aria-label="CompareStuff Home"
+                    >
                         <svg className="h-8 w-8 text-indigo-600 dark:text-indigo-400" width="24" height="24" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                             <path d="M12 3l8 4.5v9l-8 4.5l-8 -4.5v-9l8 -4.5" />
@@ -36,7 +40,7 @@ const Navbar = ({ user, onLoginClick, logout, navigate, darkMode, toggleDarkMode
                             <path d="M8 18.75l4 -2.25l4 2.25" />
                         </svg>
                         <span className="ml-2 text-xl font-bold text-slate-800 dark:text-white">CompareStuff</span>
-                    </div>
+                    </button>
 
                     {/* Navbar Right Side */}
                     <div className="flex items-center space-x-2 sm:space-x-4">

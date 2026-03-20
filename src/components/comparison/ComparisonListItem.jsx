@@ -14,13 +14,17 @@ const ComparisonListItem = ({ comparison, onView, onLoginRequest, onStatusChange
 
     return (
         <div key={comparison.id} className="bg-white dark:bg-slate-800 rounded-lg shadow-lg flex flex-col overflow-hidden transform hover:-translate-y-1 transition-all duration-300 ease-in-out dark:border dark:border-slate-700">
-            <div onClick={() => onView && onView(comparison.id)} className={onView ? "cursor-pointer" : ""}>
+            <button 
+                onClick={() => onView && onView(comparison.id)} 
+                className={`w-full text-left block focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 ${onView ? "cursor-pointer" : ""}`}
+                aria-label={`View comparison: ${comparison.title}`}
+            >
                 <img src={comparison.imageUrl || `https://via.placeholder.com/400x200.png?text=${encodeURIComponent(comparison.title)}`} alt={comparison.title} className="w-full h-48 object-cover"/>
                 <div className="p-6 flex flex-col flex-grow">
                     <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">{comparison.title}</h2>
                     <p className="text-slate-600 dark:text-slate-400 text-sm mb-4 flex-grow">{comparison.description}</p>
                 </div>
-            </div>
+            </button>
             <div className="p-6 pt-0 mt-auto">
                 <div className="flex justify-between items-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700 pt-4">
                     <div className="flex items-center gap-4">

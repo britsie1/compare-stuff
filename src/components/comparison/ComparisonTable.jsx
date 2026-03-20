@@ -127,17 +127,18 @@ const ComparisonTable = ({ comparison, itemsToDisplay, onHint, collapsedSections
         <span className="inline-flex items-center gap-1 relative">
             {content}
             {hint && (
-                <span
-                    className="ml-1 cursor-pointer text-slate-400 hover:text-indigo-500 hint-icon"
-                    tabIndex={0}
+                <button
+                    type="button"
+                    className="ml-1 cursor-pointer text-slate-400 hover:text-indigo-500 hint-icon focus:outline-none focus:text-indigo-500"
                     onMouseEnter={e => onHint('enter', e, cellKey, hint)}
                     onMouseLeave={() => onHint('leave', null, cellKey, null)}
                     onFocus={e => onHint('focus', e, cellKey, hint)}
                     onBlur={() => onHint('blur', null, cellKey, null)}
                     onClick={e => onHint('click', e, cellKey, hint)}
+                    aria-label="Show hint"
                 >
                     <Info className="w-4 h-4 align-middle" />
-                </span>
+                </button>
             )}
         </span>
     );

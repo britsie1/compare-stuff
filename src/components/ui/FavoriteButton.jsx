@@ -42,14 +42,20 @@ const FavoriteButton = ({ templateId, favorites, className = '', onLoginRequest 
     };
 
     return (
-        <div className={`flex items-center cursor-pointer group ${className}`} onClick={handleFavorite} tabIndex={0} role="button" aria-pressed={isFavorited}>
+        <button 
+            type="button"
+            className={`flex items-center cursor-pointer group focus:outline-none focus:ring-2 focus:ring-red-500 rounded-lg p-1 ${className}`} 
+            onClick={handleFavorite} 
+            aria-pressed={isFavorited}
+            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+        >
             {isFavorited ? (
                 <Heart className="w-4 h-4 mr-1.5 text-red-600 fill-red-600" />
             ) : (
                 <Heart className="w-4 h-4 mr-1.5 text-red-500" />
             )}
-            <span>{favoriteCount}</span>
-        </div>
+            <span className="text-slate-600 dark:text-slate-400 group-hover:text-red-600 transition-colors">{favoriteCount}</span>
+        </button>
     );
 };
 

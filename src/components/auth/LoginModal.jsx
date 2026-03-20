@@ -134,7 +134,7 @@ const LoginModal = ({ onClose, onShowSignUp }) => {
                 </form>
 
                 <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
-                    Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); onShowSignUp(); }} className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">Sign Up</a>
+                    Don't have an account? <button onClick={(e) => { e.preventDefault(); onShowSignUp(); }} className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 focus:outline-none focus:underline">Sign Up</button>
                 </p>
 
                 <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">

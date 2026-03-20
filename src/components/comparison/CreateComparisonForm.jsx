@@ -16,16 +16,6 @@ const CreateComparisonForm = ({ onSubmit, onCancel }) => {
     const [description, setDescription] = useState('');
     const [fields, setFields] = useState([{ type: 'field', value: '', fieldType: 'text', id: uuidv4() }]);
 
-    if (!user) {
-        return (
-            <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 p-12 md:rounded-lg md:shadow-xl text-center dark:border dark:border-slate-700 transition-colors">
-                <h2 className="text-2xl font-bold mb-4 dark:text-white">Access Denied</h2>
-                <p className="text-slate-600 dark:text-slate-400 mb-6">You must be logged in to create a comparison template.</p>
-                <Button onClick={onCancel}>Back to comparisons</Button>
-            </div>
-        );
-    }
-
     const mutation = useMutation({
         mutationFn: (templateData) => createTemplate(templateData, user),
         onSuccess: (createdTemplate) => {
@@ -37,6 +27,16 @@ const CreateComparisonForm = ({ onSubmit, onCancel }) => {
             alert('Failed to create template: ' + error.message);
         }
     });
+
+    if (!user) {
+        return (
+            <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 p-12 md:rounded-lg md:shadow-xl text-center dark:border dark:border-slate-700 transition-colors">
+                <h2 className="text-2xl font-bold mb-4 dark:text-white">Access Denied</h2>
+                <p className="text-slate-600 dark:text-slate-400 mb-6">You must be logged in to create a comparison template.</p>
+                <Button onClick={onCancel}>Back to comparisons</Button>
+            </div>
+        );
+    }
 
     const handleSubmit = (e) => {
         e.preventDefault();

@@ -11,7 +11,7 @@ const renderTextWithMentions = (text) => {
     const parts = text.split(/(@[\w\s-]+)/g);
     return parts.map((part, index) => {
         if (part.startsWith('@')) {
-            return <a href="#" key={index} className="text-blue-500 hover:underline font-semibold">{part}</a>;
+            return <span key={index} className="text-blue-500 hover:underline font-semibold cursor-pointer">{part}</span>;
         }
         return part;
     });
