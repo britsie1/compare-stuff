@@ -5,13 +5,17 @@ import CommentsSection from '../comments/CommentsSection';
 import ComparisonHeader from './ComparisonHeader';
 import ItemSelector from './ItemSelector';
 import { ComparisonTable, HintTooltip } from './ComparisonTable';
+import { useAuth } from '../../context/authHooks';
 
 const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
+    const { currentUser } = useAuth();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [itemToEdit, setItemToEdit] = useState(null);
     const [selectedItemIds, setSelectedItemIds] = useState([]);
     const [items, setItems] = useState([]);
     const templateId = comparison.id || comparison.templateId;
+
+    const isOwner = currentUser && comparison.creator && currentUser.uid === comparison.creator.uid;
 
     const [hintTooltip, setHintTooltip] = useState({ cellKey: null, text: '', x: 0, y: 0, visible: false, persistent: false });
     const [collapsedSections, setCollapsedSections] = useState({});
@@ -56,6 +60,7 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
     };
 
     const handleItemUpdate = async (updatedItem) => {
+        if (!isOwner) return;
         try {
             await updateTemplateItem(templateId, updatedItem.id, updatedItem);
             const fetchedItems = await getTemplateItems(templateId);
@@ -68,6 +73,7 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
     };
 
     const handleAddItem = async (newItemData) => {
+        if (!isOwner) return;
         try {
             await addTemplateItem(templateId, newItemData);
             const fetchedItems = await getTemplateItems(templateId);
@@ -83,6 +89,7 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
     };
 
     const handleDeleteItem = async (templateId, itemId) => {
+        if (!isOwner) return;
         try {
             await deleteTemplateItem(templateId, itemId);
             const fetchedItems = await getTemplateItems(templateId);
@@ -151,6 +158,7 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                 onEditTemplate={onEditTemplate}
                 onAddItem={() => setIsAddModalOpen(true)}
                 onEditItem={setItemToEdit}
+                isOwner={isOwner}
             />
 
             <ComparisonTable
@@ -161,8 +169,8 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
                 onToggleSection={handleToggleSection}
             />
 
-            {isAddModalOpen && <ItemFormModal fields={comparison.templateFields} onClose={() => setIsAddModalOpen(false)} onSave={handleAddItem} modalTitle="Add New Item to Compare" saveButtonText="Save Item" templateId={comparison.id || comparison.templateId} />}
-            {itemToEdit && <ItemFormModal item={itemToEdit} fields={comparison.templateFields} onClose={() => setItemToEdit(null)} onSave={handleItemUpdate} onDelete={handleDeleteItem} modalTitle="Edit Item" saveButtonText="Save Changes" templateId={comparison.id || comparison.templateId} />}
+            {isOwner && isAddModalOpen && <ItemFormModal fields={comparison.templateFields} onClose={() => setIsAddModalOpen(false)} onSave={handleAddItem} modalTitle="Add New Item to Compare" saveButtonText="Save Item" templateId={comparison.id || comparison.templateId} />}
+            {isOwner && itemToEdit && <ItemFormModal item={itemToEdit} fields={comparison.templateFields} onClose={() => setItemToEdit(null)} onSave={handleItemUpdate} onDelete={handleDeleteItem} modalTitle="Edit Item" saveButtonText="Save Changes" templateId={comparison.id || comparison.templateId} />}
             
             <HintTooltip 
                 hintTooltip={hintTooltip} 

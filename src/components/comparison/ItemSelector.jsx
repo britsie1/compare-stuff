@@ -3,7 +3,7 @@ import { Plus, Edit, Search, CheckSquare, Square, Edit3 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
-const ItemSelector = ({ items, selectedItemIds, onToggleItem, onEditTemplate, onAddItem, onEditItem }) => {
+const ItemSelector = ({ items, selectedItemIds, onToggleItem, onEditTemplate, onAddItem, onEditItem, isOwner }) => {
     const [searchQuery, setSearchQuery] = useState("");
 
     const filteredItems = items.filter(item =>
@@ -17,14 +17,16 @@ const ItemSelector = ({ items, selectedItemIds, onToggleItem, onEditTemplate, on
                     <h3 className="text-xl font-bold text-slate-800">Choose Items to Compare</h3>
                     <p className="text-slate-500">Select at least one item to see it in the table below.</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button onClick={onEditTemplate} variant="secondary">
-                        <Edit className="mr-2 h-4 w-4" /> Edit Template
-                    </Button>
-                    <Button onClick={onAddItem}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Item
-                    </Button>
-                </div>
+                {isOwner && (
+                    <div className="flex gap-2">
+                        <Button onClick={onEditTemplate} variant="secondary">
+                            <Edit className="mr-2 h-4 w-4" /> Edit Template
+                        </Button>
+                        <Button onClick={onAddItem}>
+                            <Plus className="mr-2 h-4 w-4" /> Add Item
+                        </Button>
+                    </div>
+                )}
             </div>
             <div className="relative mb-4">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -42,9 +44,11 @@ const ItemSelector = ({ items, selectedItemIds, onToggleItem, onEditTemplate, on
                                 {isSelected ? <CheckSquare className="w-5 h-5 text-indigo-600 flex-shrink-0" /> : <Square className="w-5 h-5 text-slate-400 flex-shrink-0" />}
                                 <span className={`font-medium truncate ${isSelected ? 'text-indigo-800' : 'text-slate-700'}`}>{item.title}</span>
                             </label>
-                            <button onClick={() => onEditItem(item)} className="p-1 text-slate-500 hover:text-indigo-600 rounded-full hover:bg-indigo-100 transition-colors flex-shrink-0">
-                                <Edit3 className="w-4 h-4" />
-                            </button>
+                            {isOwner && (
+                                <button onClick={() => onEditItem(item)} className="p-1 text-slate-500 hover:text-indigo-600 rounded-full hover:bg-indigo-100 transition-colors flex-shrink-0">
+                                    <Edit3 className="w-4 h-4" />
+                                </button>
+                            )}
                         </div>
                     )
                 })}

@@ -95,6 +95,8 @@ const App = () => {
 
     const EditComparisonFormWrapper = () => {
         const { id } = useParams();
+        const { currentUser } = useAuth();
+        const navigate = useNavigate();
         const { data: comparison, isLoading } = useQuery({
             queryKey: ['template', id],
             queryFn: () => getTemplate(id),
@@ -108,6 +110,17 @@ const App = () => {
         if (!comparison) {
             return <div className="text-center p-12 text-slate-500">Comparison not found.</div>;
         }
+
+        const isOwner = currentUser && comparison.creator && currentUser.uid === comparison.creator.uid;
+
+        if (!isOwner) {
+            // Redirect to the view page if not the owner
+            React.useEffect(() => {
+                navigate(`/compare/${id}`);
+            }, [id, navigate]);
+            return null;
+        }
+
         return <EditComparisonForm comparison={comparison} onSubmit={handleUpdateComparison} onCancel={() => navigate(`/compare/${id}`)} />;
     };
 

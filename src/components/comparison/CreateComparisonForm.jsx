@@ -16,6 +16,16 @@ const CreateComparisonForm = ({ onSubmit, onCancel }) => {
     const [description, setDescription] = useState('');
     const [fields, setFields] = useState([{ type: 'field', value: '', fieldType: 'text', id: uuidv4() }]);
 
+    if (!user) {
+        return (
+            <div className="max-w-4xl mx-auto bg-white p-12 md:rounded-lg md:shadow-xl text-center">
+                <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
+                <p className="text-slate-600 mb-6">You must be logged in to create a comparison template.</p>
+                <Button onClick={onCancel}>Back to comparisons</Button>
+            </div>
+        );
+    }
+
     const mutation = useMutation({
         mutationFn: (templateData) => createTemplate(templateData, user),
         onSuccess: (createdTemplate) => {
