@@ -61,7 +61,7 @@ const EditComparisonFormWrapper = ({ handleUpdateComparison }) => {
         enabled: !!id,
     });
 
-    const isOwner = currentUser && comparison.creator && currentUser.uid === comparison.creator.uid;
+    const isOwner = currentUser && comparison?.creator && currentUser.uid === comparison.creator.uid;
 
     React.useEffect(() => {
         if (!isLoading && comparison && !isOwner) {
