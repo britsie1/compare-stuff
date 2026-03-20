@@ -211,8 +211,8 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
                                         const isCollapsed = collapsedSections[fieldIndex];
                                         return (
                                             <tr key={`section-${fieldIndex}`} className="bg-slate-200 dark:bg-slate-800/80 h-11 transition-colors border-t border-slate-300 dark:border-slate-700 block md:table-row">
-                                                <td colSpan={itemsToDisplay.length + 1} className="p-2 font-bold text-slate-700 dark:text-slate-200 cursor-pointer select-none group w-full md:table-cell sticky left-0 md:static bg-inherit z-20" onClick={() => onToggleSection(fieldIndex)}>
-                                                    <div className="md:static sticky left-0 right-0 mx-auto flex items-center justify-center gap-2 whitespace-nowrap" style={{ width: 'var(--viewport-width, 100%)' }}>
+                                                <td colSpan={itemsToDisplay.length + 1} className="p-0 font-bold text-slate-700 dark:text-slate-200 cursor-pointer select-none group w-full md:table-cell md:static bg-inherit z-20" onClick={() => onToggleSection(fieldIndex)}>
+                                                    <div className="md:static sticky left-0 flex items-center justify-center gap-2 whitespace-nowrap h-11 bg-inherit px-2" style={{ width: 'var(--viewport-width, 100%)' }}>
                                                         <span className="transition-transform duration-200" style={{ display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
                                                             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block align-middle"><path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                                         </span>
@@ -238,8 +238,8 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
 
                                     return (
                                         <tr key={`field-${fieldId}`} className="flex flex-col md:table-row border-t border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                            <th className="h-10 md:h-auto py-2 px-4 font-semibold text-slate-600 dark:text-slate-300 sticky left-0 bg-slate-50 dark:bg-slate-800 md:bg-transparent z-10 md:text-left md:table-cell w-full md:w-auto" colSpan={1}>
-                                                <div className="md:static sticky left-0 right-0 mx-auto flex items-center justify-center md:justify-start whitespace-nowrap" style={{ width: 'var(--viewport-width, 100%)' }}>
+                                            <th className="h-10 md:h-auto p-0 font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 md:bg-transparent z-10 md:text-left md:table-cell w-full md:w-auto" colSpan={1}>
+                                                <div className="md:static sticky left-0 flex items-center justify-center md:justify-start whitespace-nowrap h-10 bg-inherit md:bg-transparent px-4" style={{ width: 'var(--viewport-width, 100%)' }}>
                                                     {fieldLabel}
                                                 </div>
                                             </th>
