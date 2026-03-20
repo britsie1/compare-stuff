@@ -219,8 +219,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
 
                                     return (
                                         <tr key={`field-${fieldId}`} className="flex flex-col md:table-row border-t border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                            <th className="p-4 font-semibold text-slate-600 dark:text-slate-300 sticky left-0 md:static bg-slate-50 dark:bg-slate-800 md:bg-transparent z-10 text-left md:table-cell" colSpan={1}>
-                                                <span className="md:hidden text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 block">Feature</span>
+                                            <th className="py-2 px-4 font-semibold text-slate-600 dark:text-slate-300 sticky left-0 bg-slate-50 dark:bg-slate-800 md:bg-transparent z-10 text-center md:text-left md:table-cell w-full md:w-auto" colSpan={1}>
                                                 {fieldLabel}
                                             </th>
                                             <td className="flex md:contents">
