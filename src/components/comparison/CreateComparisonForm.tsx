@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
@@ -9,6 +12,14 @@ import { useCreateTemplateMutation } from '../../hooks/queries/useTemplates';
 import { Template, TemplateField } from '../../services/templates';
 import { toast } from 'sonner';
 
+const templateSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters').max(100, 'Title is too long'),
+  description: z.string().min(10, 'Description must be at least 10 characters').max(500, 'Description is too long'),
+  imageUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+});
+
+type TemplateFormData = z.infer<typeof templateSchema>;
+
 interface CreateComparisonFormProps {
     onSubmit?: (createdTemplate: Template) => void;
     onCancel: () => void;
@@ -16,10 +27,16 @@ interface CreateComparisonFormProps {
 
 const CreateComparisonForm: React.FC<CreateComparisonFormProps> = ({ onSubmit, onCancel }) => {
     const { currentUser: user } = useAuth();
-    const [title, setTitle] = useState('');
-    const [imageUrl, setImageUrl] = useState('');
-    const [description, setDescription] = useState('');
     const [fields, setFields] = useState<TemplateField[]>([{ type: 'field', value: '', fieldType: 'text', id: uuidv4() }]);
+
+    const { register, handleSubmit, formState: { errors } } = useForm<TemplateFormData>({
+        resolver: zodResolver(templateSchema),
+        defaultValues: {
+            title: '',
+            description: '',
+            imageUrl: '',
+        }
+    });
 
     const createMutation = useCreateTemplateMutation();
 
@@ -33,46 +50,70 @@ const CreateComparisonForm: React.FC<CreateComparisonFormProps> = ({ onSubmit, o
         );
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const onFormSubmit = (data: TemplateFormData) => {
         const finalFields = fields.map(f => ({ ...f, value: f.value.trim() })).filter(f => f.value !== '');
-        if (title.trim() && finalFields.length > 0) {
-            const templateData: Partial<Template> = {
-                title,
-                imageUrl,
-                description,
-                templateFields: finalFields
-            };
-            createMutation.mutate({ templateData, user }, {
-                onSuccess: (createdTemplate) => {
-                    if (onSubmit) onSubmit(createdTemplate);
-                },
-                onError: (error) => {
-                    toast.error('Failed to create template: ' + error.message);
-                }
-            });
-        } else {
-            toast.error('Please provide a title and at least one field.');
+        
+        if (finalFields.length === 0) {
+            toast.error('Please provide at least one comparison field.');
+            return;
         }
+
+        const templateData: Partial<Template> = {
+            ...data,
+            templateFields: finalFields
+        };
+
+        createMutation.mutate({ templateData, user }, {
+            onSuccess: (createdTemplate) => {
+                toast.success('Template created successfully!');
+                if (onSubmit) onSubmit(createdTemplate);
+            },
+            onError: (error) => {
+                toast.error('Failed to create template: ' + error.message);
+            }
+        });
     };
 
     return (
         <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 p-4 md:rounded-lg md:p-8 md:shadow-xl dark:border dark:border-slate-700 transition-colors">
             <h1 className="text-3xl font-bold mb-6 text-slate-900 dark:text-white">Create a New Comparison Template</h1>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
                 <div>
                     <Label htmlFor="title">Comparison Title</Label>
-                    <Input id="title" type="text" placeholder="e.g., Best Laptops for Students" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                    <Input 
+                        id="title" 
+                        type="text" 
+                        placeholder="e.g., Best Laptops for Students" 
+                        {...register('title')}
+                        className={errors.title ? 'border-red-500 focus:ring-red-500' : ''}
+                    />
+                    {errors.title && <p className="mt-1 text-sm text-red-500">{errors.title.message}</p>}
                 </div>
                 <div>
                     <Label htmlFor="description">Short Description</Label>
-                    <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Briefly describe what you are comparing" rows={3} className="block w-full rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 transition-colors"></textarea>
+                    <textarea 
+                        id="description" 
+                        placeholder="Briefly describe what you are comparing" 
+                        rows={3} 
+                        {...register('description')}
+                        className={`block w-full rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 transition-colors ${errors.description ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    ></textarea>
+                    {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description.message}</p>}
                 </div>
                 <div>
-                    <Label htmlFor="imageUrl">Image URL</Label>
-                    <Input id="imageUrl" type="text" placeholder="https://example.com/image.png" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+                    <Label htmlFor="imageUrl">Image URL (optional)</Label>
+                    <Input 
+                        id="imageUrl" 
+                        type="text" 
+                        placeholder="https://example.com/image.png" 
+                        {...register('imageUrl')}
+                        className={errors.imageUrl ? 'border-red-500 focus:ring-red-500' : ''}
+                    />
+                    {errors.imageUrl && <p className="mt-1 text-sm text-red-500">{errors.imageUrl.message}</p>}
                 </div>
+                
                 <TemplateFieldsEditor fields={fields} setFields={setFields} />
+                
                 <div className="flex justify-end gap-4 pt-4">
                     <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
                     <Button type="submit" disabled={createMutation.isPending}>

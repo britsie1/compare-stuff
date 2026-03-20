@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { X, Info, Trash2 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
 import { TemplateField, TemplateItem } from '../../services/templates';
 import { toast } from 'sonner';
+
+const itemSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(100, 'Title is too long'),
+});
+
+type ItemFormData = z.infer<typeof itemSchema>;
 
 interface ItemFormModalProps {
     item?: TemplateItem | null;
@@ -46,8 +55,14 @@ type FieldValue = string | { text: string; url: string };
 const ItemFormModal: React.FC<ItemFormModalProps> = ({ item = null, fields, onClose, onSave, modalTitle, saveButtonText, templateId, onDelete }) => {
     
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    // Always map field ids to values for robust matching
-    const [title, setTitle] = useState(item ? item.title : '');
+    
+    const { register, handleSubmit, formState: { errors } } = useForm<ItemFormData>({
+        resolver: zodResolver(itemSchema),
+        defaultValues: {
+            title: item ? item.title : '',
+        }
+    });
+
     // For link fields, store as {text, url}, for others as string
     const [values, setValues] = useState<FieldValue[]>(() =>
         fields.map((field, index) => {
@@ -117,12 +132,7 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item = null, fields, onCl
         setShowHintInput(prev => prev.map((show, i) => i === index ? !show : show));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!title.trim()) {
-            toast.error('Please provide a title for the item.');
-            return;
-        }
+    const onFormSubmit = (data: ItemFormData) => {
         // Sanitize values: for link fields, store empty string if both text and url are empty; never store undefined
         const valueObjects = fields.map((field, idx) => {
             // Always use the field's unique id if present, fallback to index only if absolutely necessary
@@ -140,7 +150,7 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item = null, fields, onCl
         });
         const itemData: TemplateItem = {
             ...(item || { title: '', values: [] }),
-            title,
+            title: data.title,
             values: valueObjects
         };
         if (saveButtonText === 'Save Item') {
@@ -149,7 +159,6 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item = null, fields, onCl
                 return;
             }
             try {
-                // Do not call addTemplateItem here; let parent handle DB insert
                 onSave && onSave(itemData);
             } catch (error: any) {
                 toast.error('Failed to add item: ' + error.message);
@@ -253,10 +262,17 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item = null, fields, onCl
                         <X className="h-6 w-6" />
                     </button>
                 </div>
-                <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 px-2">
+                <form onSubmit={handleSubmit(onFormSubmit)} className="flex flex-col flex-1 min-h-0 px-2">
                     <div>
                         <Label htmlFor="item-title">Item Title</Label>
-                        <Input id="item-title" type="text" placeholder="e.g., Discovery Classic Smart" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                        <Input 
+                            id="item-title" 
+                            type="text" 
+                            placeholder="e.g., Discovery Classic Smart" 
+                            {...register('title')} 
+                            className={errors.title ? 'border-red-500 focus:ring-red-500' : ''}
+                        />
+                        {errors.title && <p className="mt-1 text-sm text-red-500">{errors.title.message}</p>}
                     </div>
                     <div className="flex-1 overflow-y-auto space-y-4 min-h-0 mt-4 pr-1">
                         {fieldGroups.map((group, sectionIdx) => (

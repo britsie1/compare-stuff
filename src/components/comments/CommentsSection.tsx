@@ -10,6 +10,7 @@ import {
 } from '../../hooks/queries/useComments';
 import { Comment as CommentType, Reply as ReplyType } from '../../services/comments';
 import { toast } from 'sonner';
+import { CommentSkeleton } from '../ui/Skeleton';
 
 // Renders text with highlighted @mentions
 const renderTextWithMentions = (text: string) => {
@@ -288,7 +289,14 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ templateId }) => {
     };
 
     if (isLoading) {
-        return <div className="text-slate-500 dark:text-slate-400">Loading comments...</div>;
+        return (
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 dark:border dark:border-slate-700 transition-colors">
+                <div className="h-8 w-32 bg-slate-200 dark:bg-slate-700 animate-pulse rounded mb-6"></div>
+                {[...Array(3)].map((_, i) => (
+                    <CommentSkeleton key={i} />
+                ))}
+            </div>
+        );
     }
 
     const commentCount = (comments || []).reduce((acc, comment) => {

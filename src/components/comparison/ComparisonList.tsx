@@ -7,6 +7,7 @@ import ComparisonListItem from './ComparisonListItem';
 import { useAuth } from '../../context/authHooks';
 import { useTemplates } from '../../hooks/queries/useTemplates';
 import { Template } from '../../services/templates';
+import { ComparisonItemSkeleton } from '../ui/Skeleton';
 
 interface ComparisonListProps {
     onCreate: () => void;
@@ -20,7 +21,19 @@ const ComparisonList: React.FC<ComparisonListProps> = ({ onCreate, onView }) => 
     const { data, isLoading, isError, error } = useTemplates(10);
 
     if (isLoading) {
-        return <div className="text-center py-10">Loading comparisons...</div>;
+        return (
+            <div className="max-w-7xl mx-auto">
+                <div className="flex justify-between items-center mb-6">
+                    <div className="h-9 w-48 bg-slate-200 dark:bg-slate-700 animate-pulse rounded"></div>
+                    <div className="h-10 w-32 bg-slate-200 dark:bg-slate-700 animate-pulse rounded"></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {[...Array(6)].map((_, i) => (
+                        <ComparisonItemSkeleton key={i} />
+                    ))}
+                </div>
+            </div>
+        );
     }
 
     if (isError) {

@@ -5,6 +5,7 @@ import ComparisonListItem from '../comparison/ComparisonListItem';
 import { useUserTemplates, useSetTemplateStatusMutation } from '../../hooks/queries/useTemplates';
 import { Template } from '../../services/templates';
 import { toast } from 'sonner';
+import { ComparisonItemSkeleton } from '../ui/Skeleton';
 
 const UserTemplatesPage: React.FC = () => {
     const { currentUser } = useAuth();
@@ -24,7 +25,16 @@ const UserTemplatesPage: React.FC = () => {
     };
 
     if (isLoading) {
-        return <div className="text-center py-10">Loading your templates...</div>;
+        return (
+            <div className="container mx-auto px-4 py-8">
+                <div className="h-9 w-48 bg-slate-200 dark:bg-slate-700 animate-pulse rounded mb-6"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[...Array(3)].map((_, i) => (
+                        <ComparisonItemSkeleton key={i} />
+                    ))}
+                </div>
+            </div>
+        );
     }
 
     if (isError) {

@@ -11,9 +11,9 @@ This document outlines the suggested improvements for the React Comparison App, 
 
 ## 2. UI/UX & Accessibility Enhancements
 - [x] **Replace alert() with Modern Toast Notifications**: Used `sonner` for non-blocking feedback across all components.
-- [ ] **Implement Loading Skeletons**: Use skeleton screens (e.g., `react-loading-skeleton`) instead of simple spinners/text.
-- [ ] **Advanced Form Validation**: Integrate `react-hook-form` and `zod` for `CreateComparisonForm` and `ItemFormModal`.
-- [ ] **Smooth Transitions**: Add subtle animations using `framer-motion` for navigation and UI state changes.
+- [x] **Implement Loading Skeletons**: Use skeleton screens (`react-loading-skeleton`) instead of simple spinners/text in lists and tables.
+- [x] **Advanced Form Validation**: Integrated `react-hook-form` and `zod` for `CreateComparisonForm` and `ItemFormModal` to provide real-time validation feedback.
+- [x] **Smooth Transitions**: Added page transitions and entry animations using `framer-motion` for a more polished feel.
 
 ## 3. New Features & Functionality
 - [ ] **Search and Filter**: Add search and status filtering to the comparison list and user dashboard.

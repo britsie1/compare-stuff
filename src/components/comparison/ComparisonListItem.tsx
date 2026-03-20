@@ -4,6 +4,7 @@ import { timeAgo } from '../../utils/time';
 import FavoriteButton from '../ui/FavoriteButton';
 import ViewCount from '../ui/ViewCount';
 import { Template } from '../../services/templates';
+import { motion } from 'framer-motion';
 
 interface ComparisonListItemProps {
     comparison: Template;
@@ -28,7 +29,12 @@ const ComparisonListItem: React.FC<ComparisonListItemProps> = ({
     const status = comparison.status;
 
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg flex flex-col overflow-hidden transform hover:-translate-y-1 transition-all duration-300 ease-in-out dark:border dark:border-slate-700">
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white dark:bg-slate-800 rounded-lg shadow-lg flex flex-col overflow-hidden transform hover:-translate-y-1 transition-all duration-300 ease-in-out dark:border dark:border-slate-700 h-full"
+        >
             <button 
                 onClick={() => onView && comparison.id && onView(comparison.id)} 
                 className={`w-full text-left block focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 ${onView ? "cursor-pointer" : ""}`}
@@ -84,7 +90,7 @@ const ComparisonListItem: React.FC<ComparisonListItemProps> = ({
                     </div>
                 )}
             </div>
-        </div>
+        </motion.div>
     );
 };
 
