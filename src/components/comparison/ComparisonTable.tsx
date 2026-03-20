@@ -211,7 +211,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
                                         const isCollapsed = collapsedSections[fieldIndex];
                                         return (
                                             <tr key={`section-${fieldIndex}`} className="bg-slate-200 dark:bg-slate-800/80 h-11 transition-colors border-t border-slate-300 dark:border-slate-700 block md:table-row">
-                                                <td colSpan={itemsToDisplay.length + 1} className="p-0 font-bold text-slate-700 dark:text-slate-200 cursor-pointer select-none group w-full md:table-cell md:static bg-inherit z-20" onClick={() => onToggleSection(fieldIndex)}>
+                                                <td colSpan={itemsToDisplay.length + 1} className="block md:table-cell sticky left-0 md:static p-0 font-bold text-slate-700 dark:text-slate-200 cursor-pointer select-none group w-full bg-inherit z-20" onClick={() => onToggleSection(fieldIndex)}>
                                                     <div className="md:static sticky left-0 flex items-center justify-center gap-2 whitespace-nowrap h-11 bg-inherit px-2" style={{ width: 'var(--viewport-width, 100%)' }}>
                                                         <span className="transition-transform duration-200" style={{ display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
                                                             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block align-middle"><path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
