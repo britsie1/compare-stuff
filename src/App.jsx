@@ -61,6 +61,14 @@ const EditComparisonFormWrapper = ({ handleUpdateComparison }) => {
         enabled: !!id,
     });
 
+    const isOwner = currentUser && comparison.creator && currentUser.uid === comparison.creator.uid;
+
+    React.useEffect(() => {
+        if (!isLoading && comparison && !isOwner) {
+            navigate(`/compare/${id}`);
+        }
+    }, [isLoading, comparison, isOwner, id, navigate]);
+
     if (isLoading) {
         return <div className="text-center p-12 text-slate-500">Loading...</div>;
     }
@@ -69,13 +77,7 @@ const EditComparisonFormWrapper = ({ handleUpdateComparison }) => {
         return <div className="text-center p-12 text-slate-500">Comparison not found.</div>;
     }
 
-    const isOwner = currentUser && comparison.creator && currentUser.uid === comparison.creator.uid;
-
     if (!isOwner) {
-        // Redirect to the view page if not the owner
-        React.useEffect(() => {
-            navigate(`/compare/${id}`);
-        }, [id, navigate]);
         return null;
     }
 
