@@ -6,6 +6,7 @@ import TemplateFieldsEditor from './TemplateFieldsEditor';
 import { useNavigate } from 'react-router-dom';
 import { useUpdateTemplateMutation, useDeleteTemplateMutation } from '../../hooks/queries/useTemplates';
 import { Template, TemplateField } from '../../services/templates';
+import { toast } from 'sonner';
 
 interface EditComparisonFormProps {
     comparison: Template;
@@ -67,11 +68,11 @@ const EditComparisonForm: React.FC<EditComparisonFormProps> = ({ comparison, onC
                     if (onCancel) onCancel();
                 },
                 onError: (error) => {
-                    alert('Failed to update template: ' + error.message);
+                    toast.error('Failed to update template: ' + error.message);
                 }
             });
         } else {
-            alert('Please provide a title and at least one field.');
+            toast.error('Please provide a title and at least one field.');
         }
     };
 
@@ -83,7 +84,7 @@ const EditComparisonForm: React.FC<EditComparisonFormProps> = ({ comparison, onC
                 navigate('/');
             },
             onError: (error) => {
-                alert('Failed to delete template: ' + error.message);
+                toast.error('Failed to delete template: ' + error.message);
             }
         });
     };

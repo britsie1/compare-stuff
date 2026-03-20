@@ -2,6 +2,7 @@ import React from 'react';
 import { Heart } from 'lucide-react';
 import { favoriteTemplate, unfavoriteTemplate } from '../../services/templates';
 import { useAuth } from '../../context/authHooks';
+import { toast } from 'sonner';
 
 interface FavoriteButtonProps {
     templateId: string;
@@ -49,7 +50,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
             }
         } catch (error) {
             console.error('Failed to update favorite status:', error);
-            alert('Failed to update favorite status.');
+            toast.error('Failed to update favorite status.');
         }
     };
 

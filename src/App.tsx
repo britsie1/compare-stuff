@@ -13,6 +13,7 @@ import { SignUpModal } from './components/auth/SignUpModal';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/authHooks';
 import { Template } from './services/templates';
+import { Toaster } from 'sonner';
 
 // Main App Component
 const App: React.FC = () => {
@@ -80,6 +81,7 @@ const App: React.FC = () => {
             {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} onShowSignUp={() => { setIsLoginModalOpen(false); setIsSignUpModalOpen(true); }} />}
             {isSignUpModalOpen && <SignUpModal onClose={() => setIsSignUpModalOpen(false)} />}
             <Footer navigate={navigate} />
+            <Toaster richColors />
         </div>
     );
 };

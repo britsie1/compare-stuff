@@ -9,6 +9,7 @@ import {
     useUpdateCommentMutation 
 } from '../../hooks/queries/useComments';
 import { Comment as CommentType, Reply as ReplyType } from '../../services/comments';
+import { toast } from 'sonner';
 
 // Renders text with highlighted @mentions
 const renderTextWithMentions = (text: string) => {
@@ -269,7 +270,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ templateId }) => {
 
     const handleAddTopLevelComment = (text: string) => {
         if (!currentUser) {
-            alert("Please log in to comment.");
+            toast.error("Please log in to comment.");
             return;
         }
         const newCommentData: Partial<CommentType> = {

@@ -4,6 +4,7 @@ import { useAuth } from '../../context/authHooks';
 import ComparisonListItem from '../comparison/ComparisonListItem';
 import { useUserTemplates, useSetTemplateStatusMutation } from '../../hooks/queries/useTemplates';
 import { Template } from '../../services/templates';
+import { toast } from 'sonner';
 
 const UserTemplatesPage: React.FC = () => {
     const { currentUser } = useAuth();
@@ -45,7 +46,7 @@ const UserTemplatesPage: React.FC = () => {
                             comparison={template}
                             onStatusChange={handleStatusChange}
                             onView={handleViewTemplate}
-                            onLoginRequest={() => alert("Please log in to use this feature.")}
+                            onLoginRequest={() => toast.error("Please log in to use this feature.")}
                         />
                     ))}
                 </div>

@@ -10,7 +10,7 @@ This document outlines the suggested improvements for the React Comparison App, 
 - [x] **Fix and Type Tests**: All Jest unit tests and Playwright E2E tests have been fixed, typed, and verified to pass.
 
 ## 2. UI/UX & Accessibility Enhancements
-- [ ] **Replace alert() with Modern Toast Notifications**: Use a library like `sonner` or `react-hot-toast` for non-blocking feedback.
+- [x] **Replace alert() with Modern Toast Notifications**: Used `sonner` for non-blocking feedback across all components.
 - [ ] **Implement Loading Skeletons**: Use skeleton screens (e.g., `react-loading-skeleton`) instead of simple spinners/text.
 - [ ] **Advanced Form Validation**: Integrate `react-hook-form` and `zod` for `CreateComparisonForm` and `ItemFormModal`.
 - [ ] **Smooth Transitions**: Add subtle animations using `framer-motion` for navigation and UI state changes.

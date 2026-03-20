@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
 import { TemplateField, TemplateItem } from '../../services/templates';
+import { toast } from 'sonner';
 
 interface ItemFormModalProps {
     item?: TemplateItem | null;
@@ -119,7 +120,7 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item = null, fields, onCl
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!title.trim()) {
-            alert('Please provide a title for the item.');
+            toast.error('Please provide a title for the item.');
             return;
         }
         // Sanitize values: for link fields, store empty string if both text and url are empty; never store undefined
@@ -144,14 +145,14 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item = null, fields, onCl
         };
         if (saveButtonText === 'Save Item') {
             if (!templateId) {
-                alert('Error: templateId is required to add a new item.');
+                toast.error('Error: templateId is required to add a new item.');
                 return;
             }
             try {
                 // Do not call addTemplateItem here; let parent handle DB insert
                 onSave && onSave(itemData);
             } catch (error: any) {
-                alert('Failed to add item: ' + error.message);
+                toast.error('Failed to add item: ' + error.message);
             }
         } else {
             onSave && onSave(itemData);
@@ -160,14 +161,14 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item = null, fields, onCl
 
     const handleDeleteItem = async () => {
         if (!templateId || !item || !item.id) {
-            alert('Error: templateId and item ID are required to delete an item.');
+            toast.error('Error: templateId and item ID are required to delete an item.');
             return;
         }
         try {
             onDelete && onDelete(templateId, item.id);
             onClose(); // Close the modal after successful deletion
         } catch (error: any) {
-            alert('Failed to delete item: ' + error.message);
+            toast.error('Failed to delete item: ' + error.message);
         }
     };
 

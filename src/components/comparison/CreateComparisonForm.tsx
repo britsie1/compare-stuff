@@ -7,6 +7,7 @@ import TemplateFieldsEditor from './TemplateFieldsEditor';
 import { v4 as uuidv4 } from 'uuid';
 import { useCreateTemplateMutation } from '../../hooks/queries/useTemplates';
 import { Template, TemplateField } from '../../services/templates';
+import { toast } from 'sonner';
 
 interface CreateComparisonFormProps {
     onSubmit?: (createdTemplate: Template) => void;
@@ -47,11 +48,11 @@ const CreateComparisonForm: React.FC<CreateComparisonFormProps> = ({ onSubmit, o
                     if (onSubmit) onSubmit(createdTemplate);
                 },
                 onError: (error) => {
-                    alert('Failed to create template: ' + error.message);
+                    toast.error('Failed to create template: ' + error.message);
                 }
             });
         } else {
-            alert('Please provide a title and at least one field.');
+            toast.error('Please provide a title and at least one field.');
         }
     };
 

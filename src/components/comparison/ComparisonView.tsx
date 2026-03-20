@@ -12,6 +12,7 @@ import {
     useDeleteItemMutation 
 } from '../../hooks/queries/useTemplates';
 import { Template, TemplateItem } from '../../services/templates';
+import { toast } from 'sonner';
 
 interface ComparisonViewProps {
     comparison: Template;
@@ -84,7 +85,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ comparison, onBack, onE
             setItemToEdit(null);
             // items will be automatically refetched by TanStack Query
         } catch (error) {
-            alert('Failed to update item: ' + (error as Error).message);
+            toast.error('Failed to update item: ' + (error as Error).message);
         }
     };
 
@@ -95,7 +96,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ comparison, onBack, onE
             setSelectedItemIds(prev => [...prev, newItemId]);
             setIsAddModalOpen(false);
         } catch (error) {
-            alert('Failed to add item: ' + (error as Error).message);
+            toast.error('Failed to add item: ' + (error as Error).message);
         }
     };
 
@@ -105,7 +106,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ comparison, onBack, onE
             await deleteItemMutation.mutateAsync(itemId);
             setSelectedItemIds(prev => prev.filter(id => id !== itemId));
         } catch (error) {
-            alert('Failed to delete item: ' + (error as Error).message);
+            toast.error('Failed to delete item: ' + (error as Error).message);
         }
     };
 
