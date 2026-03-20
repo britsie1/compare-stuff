@@ -1,7 +1,6 @@
 module.exports = {
   transform: {
-    '^.+\.jsx?$': 'babel-jest',
-    '^.+\.mjs$': 'babel-jest',
+    '^.+\\.(js|jsx|ts|tsx|mjs)$': 'babel-jest',
   },
   testEnvironment: 'jsdom',
   extensionsToTreatAsEsm: ['.jsx'],
@@ -13,4 +12,5 @@ module.exports = {
     '^firebase/firestore$': '<rootDir>/__mocks__/firebase/firestore.js'
   },
   setupFilesAfterEnv: ['./jest.setup.js'],
+  testPathIgnorePatterns: ['/node_modules/', '/tests/'],
 };

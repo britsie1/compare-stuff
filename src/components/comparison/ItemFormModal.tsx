@@ -1,0 +1,310 @@
+import React, { useState } from 'react';
+import { X, Info, Trash2 } from 'lucide-react';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Label } from '../ui/Label';
+import { TemplateField, TemplateItem } from '../../services/templates';
+
+interface ItemFormModalProps {
+    item?: TemplateItem | null;
+    fields: TemplateField[];
+    onClose: () => void;
+    onSave?: (itemData: TemplateItem) => void;
+    onDelete?: (templateId: string, itemId: string) => void;
+    modalTitle: string;
+    saveButtonText: string;
+    templateId?: string;
+}
+
+interface FieldWithIdx extends TemplateField {
+    _idx: number;
+}
+
+interface FieldGroup {
+    name: string | null;
+    fields: FieldWithIdx[];
+}
+
+const groupFieldsBySection = (fields: TemplateField[]): FieldGroup[] => {
+    const groups: FieldGroup[] = [];
+    let currentSection: FieldGroup = { name: null, fields: [] };
+    fields.forEach((field, idx) => {
+        if (field.type === 'section') {
+            if (currentSection.fields.length > 0 || currentSection.name) groups.push(currentSection);
+            currentSection = { name: field.value, fields: [] };
+        } else {
+            currentSection.fields.push({ ...field, _idx: idx });
+        }
+    });
+    if (currentSection.fields.length > 0 || currentSection.name) groups.push(currentSection);
+    return groups;
+};
+
+type FieldValue = string | { text: string; url: string };
+
+const ItemFormModal: React.FC<ItemFormModalProps> = ({ item = null, fields, onClose, onSave, modalTitle, saveButtonText, templateId, onDelete }) => {
+    
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    // Always map field ids to values for robust matching
+    const [title, setTitle] = useState(item ? item.title : '');
+    // For link fields, store as {text, url}, for others as string
+    const [values, setValues] = useState<FieldValue[]>(() =>
+        fields.map((field, index) => {
+            const fieldId = field.id || index;
+            if (item && Array.isArray(item.values)) {
+                const found = item.values.find(v => v.id === fieldId);
+                if (found && field.fieldType === 'link') {
+                    return (found.value as { text: string; url: string }) || { text: '', url: '' };
+                }
+                return found ? (found.value as FieldValue) : (field.fieldType === 'link' ? { text: '', url: '' } : '');
+            }
+            return field.fieldType === 'link' ? { text: '', url: '' } : '';
+        })
+    );
+    // Collapsible state for sections
+    const [openSections, setOpenSections] = useState<boolean[]>(() => {
+        const groups = groupFieldsBySection(fields);
+        return groups.map(() => true);
+    });
+
+    // Hint text state for each field (by index)
+    const [hints, setHints] = useState<string[]>(() =>
+        fields.map((field, index) => {
+            if (item && Array.isArray(item.values)) {
+                const fieldId = field.id || index;
+                const found = item.values.find(v => v.id === fieldId);
+                return found && found.hint ? found.hint : '';
+            }
+            return '';
+        })
+    );
+    const [showHintInput, setShowHintInput] = useState<boolean[]>(() =>
+        fields.map((field, index) => {
+            if (item && Array.isArray(item.values)) {
+                const fieldId = field.id || index;
+                const found = item.values.find(v => v.id === fieldId);
+                return found && found.hint ? true : false;
+            }
+            return false;
+        })
+    );
+
+    const handleValueChange = (index: number, value: FieldValue) => {
+        const newValues = [...values];
+        newValues[index] = value;
+        setValues(newValues);
+    };
+
+    const handleLinkChange = (index: number, part: 'text' | 'url', val: string) => {
+        const newValues = [...values];
+        const currentVal = (newValues[index] as { text: string; url: string }) || { text: '', url: '' };
+        newValues[index] = { ...currentVal, [part]: val };
+        setValues(newValues);
+    };
+
+    const handleSectionToggle = (sectionIdx: number) => {
+        setOpenSections(prev => prev.map((open, idx) => idx === sectionIdx ? !open : open));
+    };
+
+    const handleHintChange = (index: number, value: string) => {
+        const newHints = [...hints];
+        newHints[index] = value;
+        setHints(newHints);
+    };
+
+    const handleToggleHintInput = (index: number) => {
+        setShowHintInput(prev => prev.map((show, i) => i === index ? !show : show));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!title.trim()) {
+            alert('Please provide a title for the item.');
+            return;
+        }
+        // Sanitize values: for link fields, store empty string if both text and url are empty; never store undefined
+        const valueObjects = fields.map((field, idx) => {
+            // Always use the field's unique id if present, fallback to index only if absolutely necessary
+            const fieldId = (field && field.id != null && field.id !== '') ? field.id : idx.toString();
+            let hint = hints[idx] || '';
+            if (field.fieldType === 'link') {
+                const val = (values[idx] as { text: string; url: string }) || { text: '', url: '' };
+                if (!val.text && !val.url) {
+                    return { id: fieldId, value: '', hint };
+                }
+                return { id: fieldId, value: { text: val.text || '', url: val.url || '' }, hint };
+            } else {
+                return { id: fieldId, value: values[idx] !== undefined ? values[idx] : '', hint };
+            }
+        });
+        const itemData: TemplateItem = {
+            ...(item || { title: '', values: [] }),
+            title,
+            values: valueObjects
+        };
+        if (saveButtonText === 'Save Item') {
+            if (!templateId) {
+                alert('Error: templateId is required to add a new item.');
+                return;
+            }
+            try {
+                // Do not call addTemplateItem here; let parent handle DB insert
+                onSave && onSave(itemData);
+            } catch (error: any) {
+                alert('Failed to add item: ' + error.message);
+            }
+        } else {
+            onSave && onSave(itemData);
+        }
+    };
+
+    const handleDeleteItem = async () => {
+        if (!templateId || !item || !item.id) {
+            alert('Error: templateId and item ID are required to delete an item.');
+            return;
+        }
+        try {
+            onDelete && onDelete(templateId, item.id);
+            onClose(); // Close the modal after successful deletion
+        } catch (error: any) {
+            alert('Failed to delete item: ' + error.message);
+        }
+    };
+
+    const fieldInput = (field: TemplateField, index: number) => {
+        // Button to toggle hint input
+        const hintButton = (
+            <button
+                type="button"
+                className={`ml-2 p-1 rounded-full border border-slate-200 dark:border-slate-600 transition-colors flex items-center justify-center ${showHintInput[index] || hints[index] ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-slate-700'}`}
+                onClick={() => handleToggleHintInput(index)}
+                aria-label={showHintInput[index] ? 'Hide hint' : (hints[index] ? 'Edit hint' : 'Add hint')}
+                title={showHintInput[index] ? 'Hide hint' : (hints[index] ? 'Edit hint' : 'Add hint')}
+            >
+                <Info className="h-4 w-4" />
+            </button>
+        );
+        const hintInput = showHintInput[index] && (
+            <textarea
+                className="block w-full mt-2 p-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded text-sm resize-y min-h-[40px] transition-colors"
+                placeholder="Add a hint or context for this field (optional)"
+                value={hints[index]}
+                onChange={e => handleHintChange(index, e.target.value)}
+            />
+        );
+        if (field.fieldType === 'yes-no') {
+            return (
+                <div>
+                    <div className="flex items-center mt-2 gap-2">
+                        <input id={`field-${index}-yes`} type="radio" name={`field-${index}`} value="Yes" checked={values[index] === 'Yes'} onChange={(e) => handleValueChange(index, e.target.value)} className="dark:bg-slate-700 dark:border-slate-600" />
+                        <Label htmlFor={`field-${index}-yes`} className="mr-2">Yes</Label>
+                        <input id={`field-${index}-no`} type="radio" name={`field-${index}`} value="No" checked={values[index] === 'No'} onChange={(e) => handleValueChange(index, e.target.value)} className="dark:bg-slate-700 dark:border-slate-600" />
+                        <Label htmlFor={`field-${index}-no`}>No</Label>
+                        {hintButton}
+                    </div>
+                    {hintInput}
+                </div>
+            );
+        } else if (field.fieldType === 'number' || field.fieldType === 'currency') {
+            return (
+                <div>
+                    <div className="flex items-center">
+                        <Input id={`field-${index}`} type="number" placeholder={`Enter value for ${field.value}`} value={values[index] as string} onChange={(e) => handleValueChange(index, e.target.value)} />
+                        {hintButton}
+                    </div>
+                    {hintInput}
+                </div>
+            );
+        } else if (field.fieldType === 'link') {
+            const linkVal = (values[index] as { text: string; url: string }) || { text: '', url: '' };
+            return (
+                <div>
+                    <div className="flex gap-2 items-center">
+                        <Input id={`field-${index}-text`} type="text" placeholder="Link text" value={linkVal.text || ''} onChange={e => handleLinkChange(index, 'text', e.target.value)} className="w-1/2" />
+                        <Input id={`field-${index}-url`} type="url" placeholder="URL" value={linkVal.url || ''} onChange={e => handleLinkChange(index, 'url', e.target.value)} className="w-1/2" />
+                        {hintButton}
+                    </div>
+                    {hintInput}
+                </div>
+            );
+        } else {
+            return (
+                <div>
+                    <div className="flex items-center">
+                        <Input id={`field-${index}`} type="text" placeholder={`Enter value for ${field.value}`} value={values[index] as string} onChange={(e) => handleValueChange(index, e.target.value)} />
+                        {hintButton}
+                    </div>
+                    {hintInput}
+                </div>
+            );
+        }
+    };
+
+    // Group fields by section
+    const fieldGroups = groupFieldsBySection(fields);
+
+    return (
+        <div className="fixed inset-0 bg-slate-300 bg-opacity-60 dark:bg-black dark:bg-opacity-70 flex justify-center items-center p-4 z-50 transition-colors">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl p-2 md:p-4 w-full max-w-4xl max-h-[90vh] flex flex-col dark:border dark:border-slate-700">
+                <div className="flex justify-between items-center mb-6 flex-shrink-0 px-2">
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{modalTitle}</h2>
+                    <button onClick={onClose} className="p-2 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-500 rounded-full transition-colors">
+                        <X className="h-6 w-6" />
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 px-2">
+                    <div>
+                        <Label htmlFor="item-title">Item Title</Label>
+                        <Input id="item-title" type="text" placeholder="e.g., Discovery Classic Smart" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                    </div>
+                    <div className="flex-1 overflow-y-auto space-y-4 min-h-0 mt-4 pr-1">
+                        {fieldGroups.map((group, sectionIdx) => (
+                            <div key={sectionIdx} className="mb-4 border border-gray-200 dark:border-slate-700 rounded-lg">
+                                {group.name && (
+                                    <button type="button" className="w-full flex justify-between items-center px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-t-lg transition-colors" onClick={() => handleSectionToggle(sectionIdx)}>
+                                        <span className="font-bold text-slate-700 dark:text-slate-200">{group.name}</span>
+                                        <span className="dark:text-slate-400">{openSections[sectionIdx] ? '▲' : '▼'}</span>
+                                    </button>
+                                )}
+                                {openSections[sectionIdx] && (
+                                    <div className="p-4">
+                                        {group.fields.map((field) => (
+                                            <div key={field.id || field._idx} className="mb-4 last:mb-0">
+                                                <Label htmlFor={`field-${field._idx}`}>{field.value}</Label>
+                                                {fieldInput(field, field._idx)}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex justify-end gap-4 pt-6 pb-2 flex-shrink-0">
+                        {item && (
+                            <Button type="button" variant="destructive" onClick={() => setShowDeleteConfirm(true)} className="mr-auto">
+                                <Trash2 className="h-5 w-5 mr-2" /> Delete Item
+                            </Button>
+                        )}
+                        <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+                        <Button type="submit">{saveButtonText}</Button>
+                    </div>
+                </form>
+            </div>
+
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 bg-slate-300 bg-opacity-60 dark:bg-black dark:bg-opacity-70 flex justify-center items-center p-4 z-50">
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl p-6 w-full max-w-md dark:border dark:border-slate-700">
+                        <h3 className="text-xl font-bold mb-4 dark:text-white">Confirm Deletion</h3>
+                        <p className="mb-6 text-slate-700 dark:text-slate-300">Are you sure you want to delete this item? This action cannot be undone.</p>
+                        <div className="flex justify-end gap-4">
+                            <Button type="button" variant="secondary" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+                            <Button type="button" variant="destructive" onClick={handleDeleteItem}>Delete</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default ItemFormModal;

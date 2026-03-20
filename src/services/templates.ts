@@ -14,8 +14,7 @@ import {
     increment, 
     where,
     DocumentData,
-    QueryDocumentSnapshot,
-    DocumentReference
+    QueryDocumentSnapshot
 } from 'firebase/firestore';
 import { app } from '../firebase';
 
@@ -26,7 +25,7 @@ export interface TemplateField {
     id?: string;
     type: 'field' | 'section';
     value: string;
-    fieldType?: 'text' | 'yes-no' | 'currency' | 'link' | 'imageUrl';
+    fieldType?: 'text' | 'number' | 'yes-no' | 'currency' | 'link' | 'imageUrl';
 }
 
 export interface Template {
@@ -46,6 +45,7 @@ export interface Template {
     status: 'unpublished' | 'private' | 'published';
     favorites?: string[];
     views?: number;
+    imageUrl?: string;
 }
 
 export interface ItemValue {
@@ -80,13 +80,13 @@ export const createTemplate = async (templateData: Partial<Template>, user: any)
         const normalizedFields: TemplateField[] = (templateData.templateFields || []).map(f => {
             if (f.type === 'section') {
                 return {
-                    type: 'section',
+                    type: 'section' as const,
                     value: f.value ? String(f.value).trim() : ''
                 };
             } else {
                 return {
                     id: f.id || generateFieldId(),
-                    type: 'field',
+                    type: 'field' as const,
                     value: f.value ? String(f.value).trim() : '',
                     fieldType: f.fieldType || 'text'
                 };
@@ -94,8 +94,11 @@ export const createTemplate = async (templateData: Partial<Template>, user: any)
         }).filter(f => f.value !== '' || f.type === 'section');
 
         const template: Omit<Template, 'id'> = {
+            description: '',
+            contributors: [],
+            status: 'unpublished' as const,
+            ...templateData,
             title: templateData.title || 'Untitled Comparison',
-            description: templateData.description || '',
             templateFields: normalizedFields,
             lastUpdated: now,
             creator: {
@@ -103,10 +106,7 @@ export const createTemplate = async (templateData: Partial<Template>, user: any)
                 displayName: user.name || user.displayName || user.email || 'Unknown User',
                 email: user.email || '',
                 photoURL: user.photoURL || ''
-            },
-            contributors: [],
-            status: 'unpublished',
-            ...templateData,
+            }
         };
         const docRef = await addDoc(collection(db, 'templates'), template);
         console.log('Template created with ID:', docRef.id);
@@ -126,13 +126,13 @@ export const updateTemplate = async (templateId: string, updatedData: Partial<Te
             dataToUpdate.templateFields = updatedData.templateFields.map(f => {
                 if (f.type === 'section') {
                     return {
-                        type: 'section',
+                        type: 'section' as const,
                         value: f.value ? String(f.value).trim() : ''
                     };
                 } else {
                     return {
                         id: f.id || generateFieldId(),
-                        type: 'field',
+                        type: 'field' as const,
                         value: f.value ? String(f.value).trim() : '',
                         fieldType: f.fieldType || 'text'
                     };
@@ -234,6 +234,9 @@ export const getUserTemplates = async (userId: string): Promise<Template[]> => {
 // Function to set the publication status of a template
 export const setTemplateStatus = async (templateId: string, status: 'unpublished' | 'private' | 'published'): Promise<void> => {
     try {
+        if (!['unpublished', 'private', 'published'].includes(status)) {
+            throw new Error('Invalid status');
+        }
         const templateRef = doc(db, 'templates', templateId);
         await updateDoc(templateRef, { status });
         console.log(`Template ${templateId} status updated to ${status}`);
