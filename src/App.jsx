@@ -15,6 +15,73 @@ import { getTemplate } from './services/templates'
 import { useAuth } from './context/authHooks';
 import { useQuery } from '@tanstack/react-query';
 
+// Helper to get comparison by ID from URL param
+const ComparisonViewWrapper = ({ handleUpdateComparison }) => {
+    const { id } = useParams();
+    const { currentUser } = useAuth();
+    const navigate = useNavigate();
+    const [comparison, setComparison] = React.useState(null);
+    const [loading, setLoading] = React.useState(true);
+    const [error, setError] = React.useState(null);
+
+    // Refetch templates on back navigation from CompareView
+    React.useEffect(() => {
+        setLoading(true);
+        setError(null);
+        getTemplate(id, currentUser ? currentUser.uid : null)
+            .then((data) => {
+                setComparison(data);
+                setLoading(false);
+            })
+            .catch((err) => {
+                setError(err.message);
+                setLoading(false);
+            });
+    }, [id, currentUser]);
+
+    if (loading) {
+        return <div className="text-center p-12 text-slate-500">Loading...</div>;
+    }
+    if (error) {
+        return <div className="text-center p-12 text-slate-500">{error}</div>;
+    }
+    if (!comparison) {
+        return <div className="text-center p-12 text-slate-500">Comparison not found.</div>;
+    }
+    return <ComparisonView comparison={comparison} onUpdate={handleUpdateComparison} onBack={() => navigate('/')} onEditTemplate={() => navigate(`/compare/${id}/edit`)} />;
+};
+
+const EditComparisonFormWrapper = ({ handleUpdateComparison }) => {
+    const { id } = useParams();
+    const { currentUser } = useAuth();
+    const navigate = useNavigate();
+    const { data: comparison, isLoading } = useQuery({
+        queryKey: ['template', id],
+        queryFn: () => getTemplate(id),
+        enabled: !!id,
+    });
+
+    if (isLoading) {
+        return <div className="text-center p-12 text-slate-500">Loading...</div>;
+    }
+
+    if (!comparison) {
+        return <div className="text-center p-12 text-slate-500">Comparison not found.</div>;
+    }
+
+    const isOwner = currentUser && comparison.creator && currentUser.uid === comparison.creator.uid;
+
+    if (!isOwner) {
+        // Redirect to the view page if not the owner
+        React.useEffect(() => {
+            navigate(`/compare/${id}`);
+        }, [id, navigate]);
+        return null;
+    }
+
+    return <EditComparisonForm comparison={comparison} onSubmit={handleUpdateComparison} onCancel={() => navigate(`/compare/${id}`)} />;
+};
+
 // Main App Component
 const App = () => {
     const { currentUser, loading, logout } = useAuth();
@@ -73,72 +140,6 @@ const App = () => {
         );
     }
 
-    // Helper to get comparison by ID from URL param
-    const ComparisonViewWrapper = () => {
-        const { id } = useParams();
-        const { currentUser } = useAuth();
-        const [comparison, setComparison] = React.useState(null);
-        const [loading, setLoading] = React.useState(true);
-        const [error, setError] = React.useState(null);
-
-        // Refetch templates on back navigation from CompareView
-        React.useEffect(() => {
-            setLoading(true);
-            setError(null);
-            getTemplate(id, currentUser ? currentUser.uid : null)
-                .then((data) => {
-                    setComparison(data);
-                    setLoading(false);
-                })
-                .catch((err) => {
-                    setError(err.message);
-                    setLoading(false);
-                });
-        }, [id, currentUser]);
-
-        if (loading) {
-            return <div className="text-center p-12 text-slate-500">Loading...</div>;
-        }
-        if (error) {
-            return <div className="text-center p-12 text-slate-500">{error}</div>;
-        }
-        if (!comparison) {
-            return <div className="text-center p-12 text-slate-500">Comparison not found.</div>;
-        }
-        return <ComparisonView comparison={comparison} onUpdate={handleUpdateComparison} onBack={() => navigate('/')} onEditTemplate={() => navigate(`/compare/${id}/edit`)} />;
-    };
-
-    const EditComparisonFormWrapper = () => {
-        const { id } = useParams();
-        const { currentUser } = useAuth();
-        const navigate = useNavigate();
-        const { data: comparison, isLoading } = useQuery({
-            queryKey: ['template', id],
-            queryFn: () => getTemplate(id),
-            enabled: !!id,
-        });
-
-        if (isLoading) {
-            return <div className="text-center p-12 text-slate-500">Loading...</div>;
-        }
-
-        if (!comparison) {
-            return <div className="text-center p-12 text-slate-500">Comparison not found.</div>;
-        }
-
-        const isOwner = currentUser && comparison.creator && currentUser.uid === comparison.creator.uid;
-
-        if (!isOwner) {
-            // Redirect to the view page if not the owner
-            React.useEffect(() => {
-                navigate(`/compare/${id}`);
-            }, [id, navigate]);
-            return null;
-        }
-
-        return <EditComparisonForm comparison={comparison} onSubmit={handleUpdateComparison} onCancel={() => navigate(`/compare/${id}`)} />;
-    };
-
     return (
         <div className="bg-slate-50 dark:bg-slate-900 min-h-screen font-sans text-slate-800 dark:text-slate-200 flex flex-col transition-colors duration-300">
             <Navbar user={currentUser} onLoginClick={() => setIsLoginModalOpen(true)} logout={handleLogout} navigate={navigate} darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
@@ -146,8 +147,8 @@ const App = () => {
                 <Routes>
                     <Route path="/" element={<ComparisonList onCreate={() => navigate('/create')} onView={id => navigate(`/compare/${id}`)} />} />
                     <Route path="/create" element={<CreateComparisonForm onSubmit={handleCreateComparison} onCancel={() => navigate('/')} />} />
-                    <Route path="/compare/:id" element={<ComparisonViewWrapper />} />
-                    <Route path="/compare/:id/edit" element={<EditComparisonFormWrapper />} />
+                    <Route path="/compare/:id" element={<ComparisonViewWrapper handleUpdateComparison={handleUpdateComparison} />} />
+                    <Route path="/compare/:id/edit" element={<EditComparisonFormWrapper handleUpdateComparison={handleUpdateComparison} />} />
                     <Route path="/terms" element={<TermsPage onBack={() => navigate('/')} />} />
                     <Route path="/my-templates" element={<UserTemplatesPage />} />
                     <Route path="/notifications" element={<NotificationsPage />} />
