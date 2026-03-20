@@ -49,7 +49,7 @@ const UserTemplatesPage = () => {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-6">My Templates</h1>
+            <h1 className="text-3xl font-bold mb-6 dark:text-white">My Templates</h1>
             {templates && templates.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {templates.map(template => (
@@ -63,7 +63,7 @@ const UserTemplatesPage = () => {
                     ))}
                 </div>
             ) : (
-                <p>You haven't created any templates yet.</p>
+                <p className="dark:text-slate-400">You haven't created any templates yet.</p>
             )}
         </div>
     );

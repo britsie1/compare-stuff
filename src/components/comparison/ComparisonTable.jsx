@@ -145,14 +145,14 @@ const ComparisonTable = ({ comparison, itemsToDisplay, onHint, collapsedSections
     return (
         <>
             <div id="sticky-header-placeholder" className="sticky top-0 z-100 visibility-hidden diplay-none"></div>
-            <div id="table-container" className="table-container overflow-x-auto bg-white rounded-lg shadow-lg mb-8">
+            <div id="table-container" className="table-container overflow-x-auto bg-white dark:bg-slate-800 rounded-lg shadow-lg mb-8 dark:border dark:border-slate-700">
                 {itemsToDisplay.length > 0 ? (
                     <table id="main-table" className="w-full">
                         <thead>
-                            <tr className="bg-slate-100">
-                                <th className="p-4 font-bold text-slate-700 text-left w-1/3 md:w-1/4 lg:w-1/5 sticky left-0 bg-slate-100 z-30">Feature</th>
+                            <tr className="bg-slate-100 dark:bg-slate-700 transition-colors">
+                                <th className="p-4 font-bold text-slate-700 dark:text-slate-200 text-left w-1/3 md:w-1/4 lg:w-1/5 sticky left-0 bg-slate-100 dark:bg-slate-700 z-30">Feature</th>
                                 {itemsToDisplay.map(item => (
-                                    <th key={item.id} className="p-4 font-bold text-indigo-700 text-center w-48 md:w-56 flex-shrink-0 bg-slate-100">{item.title}</th>
+                                    <th key={item.id} className="p-4 font-bold text-indigo-700 dark:text-indigo-400 text-center w-48 md:w-56 flex-shrink-0 bg-slate-100 dark:bg-slate-700">{item.title}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -162,14 +162,14 @@ const ComparisonTable = ({ comparison, itemsToDisplay, onHint, collapsedSections
                                     if (field.type === 'section') {
                                         const isCollapsed = collapsedSections[fieldIndex];
                                         return (
-                                            <tr key={`section-${fieldIndex}`} className="bg-slate-200 h-11">
-                                                <td colSpan={itemsToDisplay.length + 1} className="p-2 font-bold text-slate-700 text-center cursor-pointer select-none group" style={{ alignContent: 'start' }} onClick={() => onToggleSection(fieldIndex)}>
+                                            <tr key={`section-${fieldIndex}`} className="bg-slate-200 dark:bg-slate-800/80 h-11 transition-colors border-t border-slate-300 dark:border-slate-700">
+                                                <td colSpan={itemsToDisplay.length + 1} className="p-2 font-bold text-slate-700 dark:text-slate-200 text-center cursor-pointer select-none group" style={{ alignContent: 'start' }} onClick={() => onToggleSection(fieldIndex)}>
                                                     <span className="inline-flex items-center gap-2 left-1/2 transform -translate-x-1/2" style={{ position: 'absolute', whiteSpace: 'nowrap' }}>
                                                         <span className="transition-transform duration-200" style={{ display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
-                                                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block align-middle"><path d="M6 8l4 4 4-4" stroke="#444444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block align-middle"><path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                                         </span>
                                                         {field.value}
-                                                        <span className="text-xs text-slate-500 ml-2 group-hover:underline">{isCollapsed ? '(Click to Expand)' : ''}</span>
+                                                        <span className="text-xs text-slate-500 dark:text-slate-400 ml-2 group-hover:underline">{isCollapsed ? '(Click to Expand)' : ''}</span>
                                                     </span>
                                                 </td>
                                             </tr>
@@ -189,8 +189,8 @@ const ComparisonTable = ({ comparison, itemsToDisplay, onHint, collapsedSections
                                     const fieldLabel = typeof field === 'object' ? field.value : field;
 
                                     return (
-                                        <tr key={`field-${fieldId}`} className="border-t border-slate-200 hover:bg-slate-50 transition-colors">
-                                            <th className="p-4 font-semibold text-slate-600 sticky left-0 bg-slate-50 z-10">{fieldLabel}</th>
+                                        <tr key={`field-${fieldId}`} className="border-t border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                            <th className="p-4 font-semibold text-slate-600 dark:text-slate-300 sticky left-0 bg-slate-50 dark:bg-slate-800 z-10">{fieldLabel}</th>
                                             {itemsToDisplay.map(item => {
                                                 const valueObj = Array.isArray(item.values)
                                                     ? item.values.find(v => v.id === fieldId)
@@ -201,26 +201,26 @@ const ComparisonTable = ({ comparison, itemsToDisplay, onHint, collapsedSections
 
                                                 switch (field.fieldType) {
                                                     case 'yes-no':
-                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value === 'Yes' ? <CheckSquare className="h-5 w-5 text-green-500 mx-auto" /> : <X className="h-5 w-5 text-red-500 mx-auto" />, hint, cellKey)}</td>;
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800 dark:text-slate-200">{renderValueWithHint(value === 'Yes' ? <CheckSquare className="h-5 w-5 text-green-500 mx-auto" /> : <X className="h-5 w-5 text-red-500 mx-auto" />, hint, cellKey)}</td>;
                                                     case 'currency':
-                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(`$${value}`, hint, cellKey)}</td>;
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800 dark:text-slate-200">{renderValueWithHint(`$${value}`, hint, cellKey)}</td>;
                                                     case 'link': {
                                                         if (value && typeof value === 'object' && value.text && value.url) {
-                                                            return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(<a href={value.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">{value.text}</a>, hint, cellKey)}</td>;
+                                                            return <td key={cellKey} className="p-4 text-center text-slate-800 dark:text-slate-200">{renderValueWithHint(<a href={value.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">{value.text}</a>, hint, cellKey)}</td>;
                                                         } else if (value && typeof value === 'object' && value.url) {
-                                                            return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(<a href={value.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">{value.url}</a>, hint, cellKey)}</td>;
+                                                            return <td key={cellKey} className="p-4 text-center text-slate-800 dark:text-slate-200">{renderValueWithHint(<a href={value.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">{value.url}</a>, hint, cellKey)}</td>;
                                                         } else if (value && typeof value === 'object' && value.text) {
-                                                            return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value.text, hint, cellKey)}</td>;
+                                                            return <td key={cellKey} className="p-4 text-center text-slate-800 dark:text-slate-200">{renderValueWithHint(value.text, hint, cellKey)}</td>;
                                                         } else if (typeof value === 'string' && value) {
-                                                            return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value, hint, cellKey)}</td>;
+                                                            return <td key={cellKey} className="p-4 text-center text-slate-800 dark:text-slate-200">{renderValueWithHint(value, hint, cellKey)}</td>;
                                                         } else {
-                                                            return <td key={cellKey} className="p-4 text-center text-slate-400">-</td>;
+                                                            return <td key={cellKey} className="p-4 text-center text-slate-400 dark:text-slate-500">-</td>;
                                                         }
                                                     }
                                                     case 'imageUrl':
-                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value ? <img src={value} alt={fieldLabel} className=" object-cover mx-auto rounded" /> : <span className="text-slate-400">-</span>, hint, cellKey)}</td>;
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800 dark:text-slate-200">{renderValueWithHint(value ? <img src={value} alt={fieldLabel} className=" object-cover mx-auto rounded" /> : <span className="text-slate-400 dark:text-slate-500">-</span>, hint, cellKey)}</td>;
                                                     default:
-                                                        return <td key={cellKey} className="p-4 text-center text-slate-800">{renderValueWithHint(value, hint, cellKey)}</td>;
+                                                        return <td key={cellKey} className="p-4 text-center text-slate-800 dark:text-slate-200">{renderValueWithHint(value, hint, cellKey)}</td>;
                                                 }
                                             })}
                                         </tr>
@@ -230,7 +230,7 @@ const ComparisonTable = ({ comparison, itemsToDisplay, onHint, collapsedSections
                         </tbody>
                     </table>
                 ) : (
-                    <div className="text-center p-12 text-slate-500">
+                    <div className="text-center p-12 text-slate-500 dark:text-slate-400">
                         <p className="text-lg font-medium">Select items from the list above to begin comparing.</p>
                     </div>
                 )}

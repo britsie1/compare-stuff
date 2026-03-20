@@ -90,8 +90,8 @@ const EditComparisonForm = ({ comparison, onCancel }) => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto bg-white p-4 md:rounded-lg md:p-8 md:shadow-xl">
-            <h1 className="text-3xl font-bold mb-6 text-slate-900">Edit Comparison Template</h1>
+        <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 p-4 md:rounded-lg md:p-8 md:shadow-xl dark:border dark:border-slate-700 transition-colors">
+            <h1 className="text-3xl font-bold mb-6 text-slate-900 dark:text-white">Edit Comparison Template</h1>
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                     <Label htmlFor="title">Comparison Title</Label>
@@ -99,7 +99,7 @@ const EditComparisonForm = ({ comparison, onCancel }) => {
                 </div>
                 <div>
                     <Label htmlFor="description">Short Description</Label>
-                    <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Briefly describe what you are comparing" rows="3" className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"></textarea>
+                    <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Briefly describe what you are comparing" rows="3" className="block w-full rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 transition-colors"></textarea>
                 </div>
                 <div>
                     <Label htmlFor="imageUrl">Image URL</Label>
@@ -117,10 +117,10 @@ const EditComparisonForm = ({ comparison, onCancel }) => {
                 </div>
             </form>
             {showDeleteConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-                    <div className="bg-white rounded-lg shadow-xl p-8 max-w-sm w-full">
-                        <h2 className="text-xl font-bold mb-4 text-red-600">Delete Template?</h2>
-                        <p className="mb-6 text-slate-700">Are you sure you want to delete this template? This action cannot be undone.</p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 dark:bg-opacity-70">
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 max-w-sm w-full dark:border dark:border-slate-700">
+                        <h2 className="text-xl font-bold mb-4 text-red-600 dark:text-red-500">Delete Template?</h2>
+                        <p className="mb-6 text-slate-700 dark:text-slate-300">Are you sure you want to delete this template? This action cannot be undone.</p>
                         <div className="flex justify-end gap-4">
                             <Button type="button" variant="secondary" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
                             <Button type="button" variant="destructive" onClick={handleDelete}>Delete</Button>

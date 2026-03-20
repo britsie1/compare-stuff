@@ -13,16 +13,16 @@ const ComparisonListItem = ({ comparison, onView, onLoginRequest, onStatusChange
     const status = comparison.status;
 
     return (
-        <div key={comparison.id} className="bg-white rounded-lg shadow-lg flex flex-col overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 ease-in-out">
+        <div key={comparison.id} className="bg-white dark:bg-slate-800 rounded-lg shadow-lg flex flex-col overflow-hidden transform hover:-translate-y-1 transition-all duration-300 ease-in-out dark:border dark:border-slate-700">
             <div onClick={() => onView && onView(comparison.id)} className={onView ? "cursor-pointer" : ""}>
                 <img src={comparison.imageUrl || `https://via.placeholder.com/400x200.png?text=${encodeURIComponent(comparison.title)}`} alt={comparison.title} className="w-full h-48 object-cover"/>
                 <div className="p-6 flex flex-col flex-grow">
-                    <h2 className="text-xl font-bold text-slate-800 mb-2">{comparison.title}</h2>
-                    <p className="text-slate-600 text-sm mb-4 flex-grow">{comparison.description}</p>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">{comparison.title}</h2>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm mb-4 flex-grow">{comparison.description}</p>
                 </div>
             </div>
             <div className="p-6 pt-0 mt-auto">
-                <div className="flex justify-between items-center text-sm text-slate-500 border-t border-slate-100 pt-4">
+                <div className="flex justify-between items-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700 pt-4">
                     <div className="flex items-center gap-4">
                         <FavoriteButton templateId={comparison.id} favorites={comparison.favorites} onLoginRequest={onLoginRequest} />
                         <ViewCount templateId={comparison.id} views={comparison.views} />
@@ -35,16 +35,16 @@ const ComparisonListItem = ({ comparison, onView, onLoginRequest, onStatusChange
                     )}
                 </div>
                 {onStatusChange && status && (
-                    <div className="mt-4 pt-4 border-t border-slate-100">
+                    <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
                         <div className="flex items-center justify-between">
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${status === 'published' ? 'bg-green-100 text-green-800' : status === 'private' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${status === 'published' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : status === 'private' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
                                 {status}
                             </span>
                             <select
                                 value={status}
                                 onChange={handleStatusChange}
                                 onClick={(e) => e.stopPropagation()}
-                                className="border border-gray-300 rounded-md px-2 py-1"
+                                className="border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-md px-2 py-1"
                             >
                                 <option value="unpublished">Unpublished</option>
                                 <option value="private">Private</option>

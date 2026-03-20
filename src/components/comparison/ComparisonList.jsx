@@ -36,7 +36,7 @@ const ComparisonList = ({ onCreate, onView }) => {
     return (
     <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-slate-900">All Comparisons</h1>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">All Comparisons</h1>
             <Button onClick={handleCreateClick}>
                 <Plus className="mr-2 h-4 w-4" /> Create New
             </Button>
@@ -56,9 +56,9 @@ const ComparisonList = ({ onCreate, onView }) => {
                 ))}
             </div>
         ) : (
-            <div className="text-center py-20 bg-white rounded-lg shadow">
-                 <h2 className="text-2xl font-semibold text-slate-700">No comparisons yet!</h2>
-                 <p className="text-slate-500 mt-2">Why not be the first to create one?</p>
+            <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-lg shadow transition-colors">
+                 <h2 className="text-2xl font-semibold text-slate-700 dark:text-slate-200">No comparisons yet!</h2>
+                 <p className="text-slate-500 dark:text-slate-400 mt-2">Why not be the first to create one?</p>
                  <Button onClick={handleCreateClick} className="mt-6">
                     <Plus className="mr-2 h-4 w-4" /> Create a Comparison
                  </Button>

@@ -2,9 +2,9 @@ import React from 'react';
 import { Button } from '../ui/Button';
 
 const TermsPage = ({ onBack }) => (
-    <div className="max-w-4xl mx-auto bg-white p-4 md:rounded-lg md:p-8 md:shadow-xl">
-        <h1 className="text-3xl font-bold mb-6 text-slate-900">Terms of Use</h1>
-        <div className="prose max-w-none text-slate-700">
+    <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 p-4 md:rounded-lg md:p-8 md:shadow-xl transition-colors">
+        <h1 className="text-3xl font-bold mb-6 text-slate-900 dark:text-white">Terms of Use</h1>
+        <div className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300">
             <p><strong>Last Updated:</strong> June 23, 2025</p>
             <p>Welcome to CompareStuff! By accessing or using our application, you agree to be bound by these Terms of Use. Please read them carefully.</p>
             

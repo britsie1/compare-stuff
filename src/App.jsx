@@ -21,7 +21,22 @@ const App = () => {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
     const [comparisons, setComparisons] = useState([]);
+    const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (darkMode) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    }, [darkMode]);
+
+    const toggleDarkMode = () => {
+        setDarkMode(!darkMode);
+    };
 
     useEffect(() => {
         if (currentUser && isLoginModalOpen) {
@@ -125,8 +140,8 @@ const App = () => {
     };
 
     return (
-        <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col">
-            <Navbar user={currentUser} onLoginClick={() => setIsLoginModalOpen(true)} logout={handleLogout} navigate={navigate} />
+        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen font-sans text-slate-800 dark:text-slate-200 flex flex-col transition-colors duration-300">
+            <Navbar user={currentUser} onLoginClick={() => setIsLoginModalOpen(true)} logout={handleLogout} navigate={navigate} darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
             <main className="p-2 md:p-8 flex-grow">
                 <Routes>
                     <Route path="/" element={<ComparisonList onCreate={() => navigate('/create')} onView={id => navigate(`/compare/${id}`)} />} />

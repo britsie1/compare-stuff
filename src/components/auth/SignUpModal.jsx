@@ -89,20 +89,20 @@ const SignUpModal = ({ onClose }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-slate-300 bg-opacity-60 flex justify-center items-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-sm relative">
+        <div className="fixed inset-0 bg-slate-300 bg-opacity-60 dark:bg-black dark:bg-opacity-70 flex justify-center items-center p-4 z-50 transition-colors">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl p-8 w-full max-w-sm relative dark:border dark:border-slate-700">
                 <button 
                     onClick={onClose}
-                    className="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-800 rounded-full transition-colors"
+                    className="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-800 dark:text-slate-500 dark:hover:text-slate-300 rounded-full transition-colors"
                 >
                     <X className="h-6 w-6" />
                 </button>
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold text-slate-900">Create your account</h2>
-                    <p className="text-slate-500 mt-1 mb-6">Sign up to get started.</p>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Create your account</h2>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1 mb-6">Sign up to get started.</p>
                 </div>
                 {error && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded relative mb-4" role="alert">
                         <strong className="font-bold">Error: </strong>
                         <span className="block sm:inline">{error}</span>
                     </div>
@@ -128,9 +128,9 @@ const SignUpModal = ({ onClose }) => {
                     </Button>
                 </div>
                 <div className="flex items-center my-6">
-                    <hr className="flex-grow border-slate-200" />
-                    <span className="mx-4 text-xs font-medium text-slate-400">OR</span>
-                    <hr className="flex-grow border-slate-200" />
+                    <hr className="flex-grow border-slate-200 dark:border-slate-700" />
+                    <span className="mx-4 text-xs font-medium text-slate-400 dark:text-slate-500">OR</span>
+                    <hr className="flex-grow border-slate-200 dark:border-slate-700" />
                 </div>
                 <form onSubmit={handleSignUp} className="space-y-4">
                     <div>
@@ -156,7 +156,7 @@ const SignUpModal = ({ onClose }) => {
                             disabled={isLoading}
                             required
                         />
-                        <div className="mt-1 text-xs font-medium text-slate-500">
+                        <div className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
                             Strength: <span className={
                                 passwordScore < 2 ? 'text-red-500' : passwordScore < 3 ? 'text-yellow-500' : 'text-green-600'
                             }>{strengthLabel[passwordScore]}</span>
@@ -184,9 +184,9 @@ const SignUpModal = ({ onClose }) => {
                         {isLoading ? 'Signing up...' : 'Sign Up'}
                     </Button>
                 </form>
-                <p className="mt-6 text-center text-sm text-slate-500">
+                <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
                     By signing up, you agree to our{' '}
-                    <a href="#terms" className="text-indigo-600 hover:text-indigo-800">
+                    <a href="#terms" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800">
                         Terms of Service
                     </a>
                 </p>

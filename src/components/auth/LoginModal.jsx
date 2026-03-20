@@ -56,22 +56,22 @@ const LoginModal = ({ onClose, onShowSignUp }) => {
 
 
     return (
-        <div className="fixed inset-0 bg-slate-300 bg-opacity-60 flex justify-center items-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-sm relative">
+        <div className="fixed inset-0 bg-slate-300 bg-opacity-60 dark:bg-black dark:bg-opacity-70 flex justify-center items-center p-4 z-50 transition-colors">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl p-8 w-full max-w-sm relative dark:border dark:border-slate-700">
                 <button 
                     onClick={onClose}
-                    className="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-800 rounded-full transition-colors"
+                    className="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-800 dark:text-slate-500 dark:hover:text-slate-300 rounded-full transition-colors"
                 >
                     <X className="h-6 w-6" />
                 </button>
                 
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold text-slate-900">Welcome back!</h2>
-                    <p className="text-slate-500 mt-1 mb-6">Sign in to continue.</p>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Welcome back!</h2>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1 mb-6">Sign in to continue.</p>
                 </div>
 
                 {error && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded relative mb-4" role="alert">
                         <strong className="font-bold">Error: </strong>
                         <span className="block sm:inline">{error}</span>
                     </div>
@@ -100,9 +100,9 @@ const LoginModal = ({ onClose, onShowSignUp }) => {
                 </div>
                 
                 <div className="flex items-center my-6">
-                    <hr className="flex-grow border-slate-200" />
-                    <span className="mx-4 text-xs font-medium text-slate-400">OR</span>
-                    <hr className="flex-grow border-slate-200" />
+                    <hr className="flex-grow border-slate-200 dark:border-slate-700" />
+                    <span className="mx-4 text-xs font-medium text-slate-400 dark:text-slate-500">OR</span>
+                    <hr className="flex-grow border-slate-200 dark:border-slate-700" />
                 </div>
 
                 <form onSubmit={handleEmailLogin} className="space-y-4">
@@ -133,13 +133,13 @@ const LoginModal = ({ onClose, onShowSignUp }) => {
                     </Button>
                 </form>
 
-                <p className="text-center text-sm text-slate-500 mt-6">
-                    Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); onShowSignUp(); }} className="font-semibold text-indigo-600 hover:text-indigo-500">Sign Up</a>
+                <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
+                    Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); onShowSignUp(); }} className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">Sign Up</a>
                 </p>
 
-                <p className="mt-6 text-center text-sm text-slate-500">
+                <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
                     By signing in, you agree to our{' '}
-                    <a href="#terms" className="text-indigo-600 hover:text-indigo-800">
+                    <a href="#terms" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800">
                         Terms of Service
                     </a>
                 </p>

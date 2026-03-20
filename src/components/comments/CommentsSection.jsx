@@ -39,13 +39,13 @@ const CommentForm = ({ onSubmit, placeholder = "Add a public comment...", cta = 
                 <textarea
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 transition-shadow duration-200"
+                    className="w-full p-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:ring-0 transition-shadow duration-200"
                     placeholder={placeholder}
                     rows="2"
                 ></textarea>
                 <div className="flex justify-end mt-2">
-                    <button type="button" onClick={() => setText('')} className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
-                    <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-300" disabled={!text.trim()}>
+                    <button type="button" onClick={() => setText('')} className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">Cancel</button>
+                    <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 dark:disabled:bg-blue-900" disabled={!text.trim()}>
                         {cta}
                     </button>
                 </div>
@@ -123,20 +123,20 @@ const Comment = ({ comment, onUpdate, onAddReply, isLoggedIn }) => {
         <div className="flex items-start space-x-3">
             <img src={comment.user.avatar} alt={comment.user.name} className="w-10 h-10 rounded-full" />
             <div className="flex-1">
-                <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="bg-gray-50 dark:bg-slate-700/50 p-3 rounded-lg transition-colors">
                     <div className="flex items-center space-x-2">
-                        <span className="font-semibold text-gray-800">{comment.user.name}</span>
-                        <span className="text-xs text-gray-500">· {timeAgo(comment.timestamp)}</span>
+                        <span className="font-semibold text-gray-800 dark:text-gray-200">{comment.user.name}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">· {timeAgo(comment.timestamp)}</span>
                     </div>
-                    <p className="text-gray-700 mt-1">{renderTextWithMentions(comment.text)}</p>
+                    <p className="text-gray-700 dark:text-gray-300 mt-1">{renderTextWithMentions(comment.text)}</p>
                 </div>
-                <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500 font-medium">
+                <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500 dark:text-gray-400 font-medium">
                     {/* Voting */}
                     <div className="flex items-center space-x-1">
                         <button 
                             onClick={() => handleVote('up')} 
                             disabled={!isLoggedIn}
-                            className={`p-1 rounded-full hover:bg-gray-200 ${comment.userVote === 1 ? 'text-green-500' : ''} ${!isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 ${comment.userVote === 1 ? 'text-green-500' : ''} ${!isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <ChevronUp size={16} />
                         </button>
@@ -144,7 +144,7 @@ const Comment = ({ comment, onUpdate, onAddReply, isLoggedIn }) => {
                         <button 
                             onClick={() => handleVote('down')} 
                             disabled={!isLoggedIn}
-                            className={`p-1 rounded-full hover:bg-gray-200 ${comment.userVote === -1 ? 'text-red-500' : ''} ${!isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 ${comment.userVote === -1 ? 'text-red-500' : ''} ${!isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <ChevronDown size={16} />
                         </button>
@@ -154,7 +154,7 @@ const Comment = ({ comment, onUpdate, onAddReply, isLoggedIn }) => {
                     <button 
                         onClick={handleLike} 
                         disabled={!isLoggedIn}
-                        className={`flex items-center space-x-1 p-1 rounded-full hover:bg-gray-200 ${comment.userLiked ? 'text-pink-500' : ''} ${!isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`flex items-center space-x-1 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 ${comment.userLiked ? 'text-pink-500' : ''} ${!isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <ThumbsUp size={14} />
                         <span>{comment.likes > 0 && comment.likes}</span>
@@ -162,7 +162,7 @@ const Comment = ({ comment, onUpdate, onAddReply, isLoggedIn }) => {
                     
                     {/* Replying */}
                     {isLoggedIn && (
-                        <button onClick={() => setIsReplying(!isReplying)} className="flex items-center space-x-1 p-1 rounded-full hover:bg-gray-200">
+                        <button onClick={() => setIsReplying(!isReplying)} className="flex items-center space-x-1 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700">
                             <MessageSquare size={14} />
                             <span>Reply</span>
                         </button>
@@ -172,7 +172,7 @@ const Comment = ({ comment, onUpdate, onAddReply, isLoggedIn }) => {
                     <button 
                         onClick={handleFlag} 
                         disabled={!isLoggedIn}
-                        className={`flex items-center space-x-1 p-1 rounded-full hover:bg-gray-200 ${comment.userFlagged ? 'text-yellow-500' : ''} ${!isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`flex items-center space-x-1 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 ${comment.userFlagged ? 'text-yellow-500' : ''} ${!isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <Flag size={14} />
                         <span>{comment.flags > 0 ? `Flagged (${comment.flags})` : 'Flag'}</span>
@@ -191,7 +191,7 @@ const Comment = ({ comment, onUpdate, onAddReply, isLoggedIn }) => {
                      <div className="mt-3">
                         <button 
                             onClick={() => setAreRepliesVisible(!areRepliesVisible)}
-                            className="text-blue-600 text-xs font-semibold flex items-center space-x-1 mb-2 hover:underline"
+                            className="text-blue-600 dark:text-blue-400 text-xs font-semibold flex items-center space-x-1 mb-2 hover:underline"
                         >
                            {areRepliesVisible ? <ChevronUp size={14}/> : <ChevronDown size={14} />}
                            <span>{areRepliesVisible ? 'Hide Replies' : `View ${comment.replies.length} Replies`}</span>
@@ -208,7 +208,7 @@ const Comment = ({ comment, onUpdate, onAddReply, isLoggedIn }) => {
 // Represents the list of comments
 const CommentList = ({ comments, onUpdate, onAddReply, isReplyList = false, isLoggedIn }) => {
     return (
-        <div className={`space-y-6 ${isReplyList ? 'pl-6 border-l-2 border-gray-200' : ''}`}>
+        <div className={`space-y-6 ${isReplyList ? 'pl-6 border-l-2 border-gray-200 dark:border-slate-700' : ''}`}>
             {comments.map(comment => (
                 <Comment key={comment.id} comment={comment} onUpdate={onUpdate} onAddReply={onAddReply} isLoggedIn={isLoggedIn} />
             ))}
@@ -279,7 +279,7 @@ const CommentsSection = ({ templateId }) => {
     };
 
     if (isLoading) {
-        return <div>Loading comments...</div>;
+        return <div className="text-slate-500 dark:text-slate-400">Loading comments...</div>;
     }
 
     const commentCount = comments.reduce((acc, comment) => {
@@ -288,15 +288,15 @@ const CommentsSection = ({ templateId }) => {
 
     return (
         <div>
-            <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-2xl font-bold text-gray-900">{commentCount} Comments</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 dark:border dark:border-slate-700 transition-colors">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{commentCount} Comments</h2>
                 
                 <div className="mt-6">
                     {currentUser ? (
                         <CommentForm onSubmit={handleAddTopLevelComment} />
                     ) : (
-                        <div className="bg-gray-50 p-4 rounded-lg text-center border border-gray-200">
-                            <p className="text-gray-600">Please log in to participate in the discussion.</p>
+                        <div className="bg-gray-50 dark:bg-slate-700/50 p-4 rounded-lg text-center border border-gray-200 dark:border-slate-600">
+                            <p className="text-gray-600 dark:text-gray-400">Please log in to participate in the discussion.</p>
                         </div>
                     )}
                 </div>

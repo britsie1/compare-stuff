@@ -18,9 +18,9 @@ const CreateComparisonForm = ({ onSubmit, onCancel }) => {
 
     if (!user) {
         return (
-            <div className="max-w-4xl mx-auto bg-white p-12 md:rounded-lg md:shadow-xl text-center">
-                <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
-                <p className="text-slate-600 mb-6">You must be logged in to create a comparison template.</p>
+            <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 p-12 md:rounded-lg md:shadow-xl text-center dark:border dark:border-slate-700 transition-colors">
+                <h2 className="text-2xl font-bold mb-4 dark:text-white">Access Denied</h2>
+                <p className="text-slate-600 dark:text-slate-400 mb-6">You must be logged in to create a comparison template.</p>
                 <Button onClick={onCancel}>Back to comparisons</Button>
             </div>
         );
@@ -55,8 +55,8 @@ const CreateComparisonForm = ({ onSubmit, onCancel }) => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto bg-white p-4 md:rounded-lg md:p-8 md:shadow-xl">
-            <h1 className="text-3xl font-bold mb-6 text-slate-900">Create a New Comparison Template</h1>
+        <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 p-4 md:rounded-lg md:p-8 md:shadow-xl dark:border dark:border-slate-700 transition-colors">
+            <h1 className="text-3xl font-bold mb-6 text-slate-900 dark:text-white">Create a New Comparison Template</h1>
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                     <Label htmlFor="title">Comparison Title</Label>
@@ -64,7 +64,7 @@ const CreateComparisonForm = ({ onSubmit, onCancel }) => {
                 </div>
                 <div>
                     <Label htmlFor="description">Short Description</Label>
-                    <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Briefly describe what you are comparing" rows="3" className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"></textarea>
+                    <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Briefly describe what you are comparing" rows="3" className="block w-full rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 transition-colors"></textarea>
                 </div>
                 <div>
                     <Label htmlFor="imageUrl">Image URL</Label>

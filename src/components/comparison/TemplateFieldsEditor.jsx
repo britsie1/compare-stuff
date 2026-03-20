@@ -62,7 +62,7 @@ const TemplateFieldsEditor = ({
   return (
     <div className="p-0 sm:p-0"> {/* Remove modal padding for mobile friendliness */}
       {showLabel && <Label>{label}</Label>}
-      <p className="text-sm text-slate-500 mb-2">{description}</p>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">{description}</p>
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="fields-list">
           {(provided) => (

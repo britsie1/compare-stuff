@@ -153,7 +153,7 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
         const hintButton = (
             <button
                 type="button"
-                className={`ml-2 p-1 rounded-full border border-slate-200 transition-colors flex items-center justify-center ${showHintInput[index] || hints[index] ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-100'}`}
+                className={`ml-2 p-1 rounded-full border border-slate-200 dark:border-slate-600 transition-colors flex items-center justify-center ${showHintInput[index] || hints[index] ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-slate-700'}`}
                 onClick={() => handleToggleHintInput(index)}
                 aria-label={showHintInput[index] ? 'Hide hint' : (hints[index] ? 'Edit hint' : 'Add hint')}
                 title={showHintInput[index] ? 'Hide hint' : (hints[index] ? 'Edit hint' : 'Add hint')}
@@ -163,7 +163,7 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
         );
         const hintInput = showHintInput[index] && (
             <textarea
-                className="block w-full mt-2 p-2 border border-slate-200 rounded text-sm resize-y min-h-[40px]"
+                className="block w-full mt-2 p-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded text-sm resize-y min-h-[40px] transition-colors"
                 placeholder="Add a hint or context for this field (optional)"
                 value={hints[index]}
                 onChange={e => handleHintChange(index, e.target.value)}
@@ -173,9 +173,9 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
             return (
                 <div>
                     <div className="flex items-center mt-2 gap-2">
-                        <input id={`field-${index}-yes`} type="radio" name={`field-${index}`} value="Yes" checked={values[index] === 'Yes'} onChange={(e) => handleValueChange(index, e.target.value)}  />
+                        <input id={`field-${index}-yes`} type="radio" name={`field-${index}`} value="Yes" checked={values[index] === 'Yes'} onChange={(e) => handleValueChange(index, e.target.value)} className="dark:bg-slate-700 dark:border-slate-600" />
                         <Label htmlFor={`field-${index}-yes`} className="mr-2">Yes</Label>
-                        <input id={`field-${index}-no`} type="radio" name={`field-${index}`} value="No" checked={values[index] === 'No'} onChange={(e) => handleValueChange(index, e.target.value)} />
+                        <input id={`field-${index}-no`} type="radio" name={`field-${index}`} value="No" checked={values[index] === 'No'} onChange={(e) => handleValueChange(index, e.target.value)} className="dark:bg-slate-700 dark:border-slate-600" />
                         <Label htmlFor={`field-${index}-no`}>No</Label>
                         {hintButton}
                     </div>
@@ -220,32 +220,32 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
     const fieldGroups = groupFieldsBySection(fields);
 
     return (
-        <div className="fixed inset-0 bg-gray-300 bg-opacity-50 flex justify-center items-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-2xl p-2 md:p-4 w-full max-w-4xl max-h-[90vh] flex flex-col">
-                <div className="flex justify-between items-center mb-6 flex-shrink-0">
-                    <h2 className="text-2xl font-bold text-slate-900">{modalTitle}</h2>
-                    <button onClick={onClose} className="p-2 text-slate-500 hover:text-red-600 rounded-full transition-colors">
+        <div className="fixed inset-0 bg-slate-300 bg-opacity-60 dark:bg-black dark:bg-opacity-70 flex justify-center items-center p-4 z-50 transition-colors">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl p-2 md:p-4 w-full max-w-4xl max-h-[90vh] flex flex-col dark:border dark:border-slate-700">
+                <div className="flex justify-between items-center mb-6 flex-shrink-0 px-2">
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{modalTitle}</h2>
+                    <button onClick={onClose} className="p-2 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-500 rounded-full transition-colors">
                         <X className="h-6 w-6" />
                     </button>
                 </div>
-                <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 px-2">
                     <div>
                         <Label htmlFor="item-title">Item Title</Label>
                         <Input id="item-title" type="text" placeholder="e.g., Discovery Classic Smart" value={title} onChange={(e) => setTitle(e.target.value)} required />
                     </div>
-                    <div className="flex-1 overflow-y-auto space-y-4 min-h-0">
+                    <div className="flex-1 overflow-y-auto space-y-4 min-h-0 mt-4 pr-1">
                         {fieldGroups.map((group, sectionIdx) => (
-                            <div key={sectionIdx} className="mb-4 border border-gray-200 rounded-lg">
+                            <div key={sectionIdx} className="mb-4 border border-gray-200 dark:border-slate-700 rounded-lg">
                                 {group.name && (
-                                    <button type="button" className="w-full flex justify-between items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-t-lg" onClick={() => handleSectionToggle(sectionIdx)}>
-                                        <span className="font-bold text-slate-700">{group.name}</span>
-                                        <span>{openSections[sectionIdx] ? '▲' : '▼'}</span>
+                                    <button type="button" className="w-full flex justify-between items-center px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-t-lg transition-colors" onClick={() => handleSectionToggle(sectionIdx)}>
+                                        <span className="font-bold text-slate-700 dark:text-slate-200">{group.name}</span>
+                                        <span className="dark:text-slate-400">{openSections[sectionIdx] ? '▲' : '▼'}</span>
                                     </button>
                                 )}
                                 {openSections[sectionIdx] && (
-                                    <div className="p-2">
+                                    <div className="p-4">
                                         {group.fields.map((field, idx) => (
-                                            <div key={field.id || field._idx || idx} className="mb-4">
+                                            <div key={field.id || field._idx || idx} className="mb-4 last:mb-0">
                                                 <Label htmlFor={`field-${field._idx}`}>{field.value}</Label>
                                                 {fieldInput(field, field._idx)}
                                             </div>
@@ -255,7 +255,7 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
                             </div>
                         ))}
                     </div>
-                    <div className="flex justify-end gap-4 pt-6 flex-shrink-0">
+                    <div className="flex justify-end gap-4 pt-6 pb-2 flex-shrink-0">
                         {item && (
                             <Button type="button" variant="danger" onClick={() => setShowDeleteConfirm(true)} className="mr-auto">
                                 <Trash2 className="h-5 w-5 mr-2" /> Delete Item
@@ -268,10 +268,10 @@ const ItemFormModal = ({ item = null, fields, onClose, onSave, modalTitle, saveB
             </div>
 
             {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-gray-300 bg-opacity-50 flex justify-center items-center p-4 z-50">
-                    <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md">
-                        <h3 className="text-xl font-bold mb-4">Confirm Deletion</h3>
-                        <p className="mb-6">Are you sure you want to delete this item? This action cannot be undone.</p>
+                <div className="fixed inset-0 bg-slate-300 bg-opacity-60 dark:bg-black dark:bg-opacity-70 flex justify-center items-center p-4 z-50">
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl p-6 w-full max-w-md dark:border dark:border-slate-700">
+                        <h3 className="text-xl font-bold mb-4 dark:text-white">Confirm Deletion</h3>
+                        <p className="mb-6 text-slate-700 dark:text-slate-300">Are you sure you want to delete this item? This action cannot be undone.</p>
                         <div className="flex justify-end gap-4">
                             <Button type="button" variant="secondary" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
                             <Button type="button" variant="danger" onClick={handleDeleteItem}>Delete</Button>
