@@ -3,17 +3,13 @@ import { Plus } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { LoginModal } from '../auth/LoginModal';
 import ComparisonListItem from './ComparisonListItem';
-import { useQuery } from '@tanstack/react-query';
-import { getTemplates } from '../../services/templates';
 import { useAuth } from '../../context/authHooks';
+import { useTemplates } from '../../hooks/queries/useTemplates';
 
 const ComparisonList = ({ onCreate, onView }) => {
     const { currentUser } = useAuth();
     const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
-    const { data, isLoading, isError, error } = useQuery({
-        queryKey: ['templates'],
-        queryFn: () => getTemplates(10),
-    });
+    const { data, isLoading, isError, error } = useTemplates(10);
 
     if (isLoading) {
         return <div className="text-center py-10">Loading comparisons...</div>;

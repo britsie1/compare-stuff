@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { ChevronUp, ChevronDown, ThumbsUp, Flag, MessageSquare } from 'lucide-react';
 import { timeAgo } from '../../utils/time';
-import { getComments, addComment, addReply, updateComment } from '../../services/comments';
 import { useAuth } from '../../context/authHooks';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { 
+    useComments, 
+    useAddCommentMutation, 
+    useAddReplyMutation, 
+    useUpdateCommentMutation 
+} from '../../hooks/queries/useComments';
 
 // Renders text with highlighted @mentions
 const renderTextWithMentions = (text) => {
@@ -220,38 +224,15 @@ const CommentList = ({ comments, onUpdate, onAddReply, isReplyList = false, isLo
 // --- MAIN COMPONENT ---
 const CommentsSection = ({ templateId }) => {
     const { currentUser } = useAuth();
-    const queryClient = useQueryClient();
+    const { data: comments = [], isLoading } = useComments(templateId);
 
-    const { data: comments, isLoading } = useQuery({
-        queryKey: ['comments', templateId],
-        queryFn: () => getComments(templateId),
-        initialData: [],
-    });
-
-    const updateMutation = useMutation({
-        mutationFn: ({ commentId, updates }) => updateComment(templateId, commentId, updates),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['comments', templateId]);
-        },
-    });
-
-    const addReplyMutation = useMutation({
-        mutationFn: ({ parentId, replyData }) => addReply(templateId, parentId, replyData),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['comments', templateId]);
-        },
-    });
-
-    const addCommentMutation = useMutation({
-        mutationFn: (commentData) => addComment(templateId, commentData),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['comments', templateId]);
-        },
-    });
+    const updateCommentMutation = useUpdateCommentMutation(templateId);
+    const addReplyMutation = useAddReplyMutation(templateId);
+    const addCommentMutation = useAddCommentMutation(templateId);
 
     const handleUpdateComment = (commentId, updates) => {
         if (!currentUser) return;
-        updateMutation.mutate({ commentId, updates });
+        updateCommentMutation.mutate({ commentId, updates });
     };
     
     const handleAddReply = (parentId, replyData) => {
@@ -282,7 +263,7 @@ const CommentsSection = ({ templateId }) => {
         return <div className="text-slate-500 dark:text-slate-400">Loading comments...</div>;
     }
 
-    const commentCount = comments.reduce((acc, comment) => {
+    const commentCount = (comments || []).reduce((acc, comment) => {
         return acc + 1 + (comment.replies ? comment.replies.length : 0);
     }, 0);
 

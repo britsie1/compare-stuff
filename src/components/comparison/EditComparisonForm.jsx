@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
-import { deleteTemplate, updateTemplate } from '../../services/templates';
 import TemplateFieldsEditor from './TemplateFieldsEditor';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/authHooks';
+import { useUpdateTemplateMutation, useDeleteTemplateMutation } from '../../hooks/queries/useTemplates';
 
 const EditComparisonForm = ({ comparison, onCancel }) => {
     const [title, setTitle] = useState(comparison.title);
@@ -15,8 +14,10 @@ const EditComparisonForm = ({ comparison, onCancel }) => {
     const [fields, setFields] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
     const { currentUser } = useAuth();
+
+    const updateMutation = useUpdateTemplateMutation();
+    const deleteMutation = useDeleteTemplateMutation();
 
     useEffect(() => {
         setFields(
@@ -35,31 +36,6 @@ const EditComparisonForm = ({ comparison, onCancel }) => {
         );
     }, [comparison.templateFields]);
 
-    const updateMutation = useMutation({
-        mutationFn: (updatedData) => updateTemplate(comparison.id, updatedData),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['template', comparison.id]);
-            queryClient.invalidateQueries(['templates']);
-            queryClient.invalidateQueries(['userTemplates', currentUser?.uid]);
-            if (onCancel) onCancel();
-        },
-        onError: (error) => {
-            alert('Failed to update template: ' + error.message);
-        }
-    });
-
-    const deleteMutation = useMutation({
-        mutationFn: () => deleteTemplate(comparison.id),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['templates']);
-            queryClient.invalidateQueries(['userTemplates', currentUser?.uid]);
-            navigate('/');
-        },
-        onError: (error) => {
-            alert('Failed to delete template: ' + error.message);
-        }
-    });
-
     const handleSubmit = (e) => {
         e.preventDefault();
         const finalFields = fields
@@ -73,11 +49,21 @@ const EditComparisonForm = ({ comparison, onCancel }) => {
             .filter(f => f.value !== '');
         if (title.trim() && finalFields.length > 0) {
             updateMutation.mutate({
-                title,
-                imageUrl,
-                description,
-                templateFields: finalFields,
-                lastUpdated: new Date().toISOString(),
+                templateId: comparison.id,
+                updatedData: {
+                    title,
+                    imageUrl,
+                    description,
+                    templateFields: finalFields,
+                    lastUpdated: new Date().toISOString(),
+                }
+            }, {
+                onSuccess: () => {
+                    if (onCancel) onCancel();
+                },
+                onError: (error) => {
+                    alert('Failed to update template: ' + error.message);
+                }
             });
         } else {
             alert('Please provide a title and at least one field.');
@@ -86,7 +72,14 @@ const EditComparisonForm = ({ comparison, onCancel }) => {
 
     const handleDelete = () => {
         setShowDeleteConfirm(false);
-        deleteMutation.mutate();
+        deleteMutation.mutate(comparison.id, {
+            onSuccess: () => {
+                navigate('/');
+            },
+            onError: (error) => {
+                alert('Failed to delete template: ' + error.message);
+            }
+        });
     };
 
     return (

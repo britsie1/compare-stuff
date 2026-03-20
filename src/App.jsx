@@ -3,86 +3,15 @@ import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { ComparisonList } from './components/comparison/ComparisonList';
 import { CreateComparisonForm } from './components/comparison/CreateComparisonForm';
-import { ComparisonView } from './components/comparison/ComparisonView';
-import { EditComparisonForm } from './components/comparison/EditComparisonForm';
+import ComparisonViewWrapper from './components/comparison/wrappers/ComparisonViewWrapper';
+import EditComparisonFormWrapper from './components/comparison/wrappers/EditComparisonFormWrapper';
 import { TermsPage } from './components/pages/TermsPage';
 import UserTemplatesPage from './components/pages/UserTemplatesPage';
 import NotificationsPage from './components/pages/NotificationsPage';
 import { LoginModal } from './components/auth/LoginModal';
 import { SignUpModal } from './components/auth/SignUpModal';
-import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
-import { getTemplate } from './services/templates'
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/authHooks';
-import { useQuery } from '@tanstack/react-query';
-
-// Helper to get comparison by ID from URL param
-const ComparisonViewWrapper = ({ handleUpdateComparison }) => {
-    const { id } = useParams();
-    const { currentUser } = useAuth();
-    const navigate = useNavigate();
-    const [comparison, setComparison] = React.useState(null);
-    const [loading, setLoading] = React.useState(true);
-    const [error, setError] = React.useState(null);
-
-    // Refetch templates on back navigation from CompareView
-    React.useEffect(() => {
-        setLoading(true);
-        setError(null);
-        getTemplate(id, currentUser ? currentUser.uid : null)
-            .then((data) => {
-                setComparison(data);
-                setLoading(false);
-            })
-            .catch((err) => {
-                setError(err.message);
-                setLoading(false);
-            });
-    }, [id, currentUser]);
-
-    if (loading) {
-        return <div className="text-center p-12 text-slate-500">Loading...</div>;
-    }
-    if (error) {
-        return <div className="text-center p-12 text-slate-500">{error}</div>;
-    }
-    if (!comparison) {
-        return <div className="text-center p-12 text-slate-500">Comparison not found.</div>;
-    }
-    return <ComparisonView comparison={comparison} onUpdate={handleUpdateComparison} onBack={() => navigate('/')} onEditTemplate={() => navigate(`/compare/${id}/edit`)} />;
-};
-
-const EditComparisonFormWrapper = ({ handleUpdateComparison }) => {
-    const { id } = useParams();
-    const { currentUser } = useAuth();
-    const navigate = useNavigate();
-    const { data: comparison, isLoading } = useQuery({
-        queryKey: ['template', id],
-        queryFn: () => getTemplate(id),
-        enabled: !!id,
-    });
-
-    const isOwner = currentUser && comparison?.creator && currentUser.uid === comparison.creator.uid;
-
-    React.useEffect(() => {
-        if (!isLoading && comparison && !isOwner) {
-            navigate(`/compare/${id}`);
-        }
-    }, [isLoading, comparison, isOwner, id, navigate]);
-
-    if (isLoading) {
-        return <div className="text-center p-12 text-slate-500">Loading...</div>;
-    }
-
-    if (!comparison) {
-        return <div className="text-center p-12 text-slate-500">Comparison not found.</div>;
-    }
-
-    if (!isOwner) {
-        return null;
-    }
-
-    return <EditComparisonForm comparison={comparison} onSubmit={handleUpdateComparison} onCancel={() => navigate(`/compare/${id}`)} />;
-};
 
 // Main App Component
 const App = () => {

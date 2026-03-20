@@ -1,34 +1,19 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { setTemplateStatus, getUserTemplates } from '../../services/templates';
 import { useAuth } from '../../context/authHooks';
 import ComparisonListItem from '../comparison/ComparisonListItem';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useUserTemplates, useSetTemplateStatusMutation } from '../../hooks/queries/useTemplates';
 
 const UserTemplatesPage = () => {
     const { currentUser } = useAuth();
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
 
-    const { data: templates, isLoading, isError, error } = useQuery({
-        queryKey: ['userTemplates', currentUser?.uid],
-        queryFn: () => getUserTemplates(currentUser.uid),
-        enabled: !!currentUser,
-    });
+    const { data: templates, isLoading, isError, error } = useUserTemplates(currentUser?.uid);
 
-    const mutation = useMutation({
-        mutationFn: ({ templateId, newStatus }) => setTemplateStatus(templateId, newStatus),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['userTemplates', currentUser?.uid]);
-        },
-        onError: (err) => {
-            alert('Failed to update template status. Please try again.');
-            console.error(err);
-        }
-    });
+    const statusMutation = useSetTemplateStatusMutation(currentUser?.uid);
 
     const handleStatusChange = (templateId, newStatus) => {
-        mutation.mutate({ templateId, newStatus });
+        statusMutation.mutate({ templateId, newStatus });
     };
 
     const handleViewTemplate = (templateId) => {

@@ -1,19 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import ItemFormModal from './ItemFormModal';
-import { getTemplateItems, addTemplateItem, updateTemplateItem, deleteTemplateItem } from '../../services/templates';
 import CommentsSection from '../comments/CommentsSection';
 import ComparisonHeader from './ComparisonHeader';
 import ItemSelector from './ItemSelector';
 import { ComparisonTable, HintTooltip } from './ComparisonTable';
 import { useAuth } from '../../context/authHooks';
+import { 
+    useTemplateItems, 
+    useAddItemMutation, 
+    useUpdateItemMutation, 
+    useDeleteItemMutation 
+} from '../../hooks/queries/useTemplates';
 
 const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
     const { currentUser } = useAuth();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [itemToEdit, setItemToEdit] = useState(null);
     const [selectedItemIds, setSelectedItemIds] = useState([]);
-    const [items, setItems] = useState([]);
     const templateId = comparison.id || comparison.templateId;
+
+    const { data: items = [], isLoading: itemsLoading } = useTemplateItems(templateId);
+    
+    const addItemMutation = useAddItemMutation(templateId);
+    const updateItemMutation = useUpdateItemMutation(templateId);
+    const deleteItemMutation = useDeleteItemMutation(templateId);
 
     const isOwner = currentUser && comparison.creator && currentUser.uid === comparison.creator.uid;
 
@@ -40,17 +50,6 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
         };
     }, [hintTooltip.visible]);
 
-    useEffect(() => {
-        if (templateId) {
-            getTemplateItems(templateId)
-                .then(fetchedItems => setItems(fetchedItems))
-                .catch(err => {
-                    setItems([]);
-                    console.error('Failed to fetch template items:', err);
-                });
-        }
-    }, [templateId]);
-
     const handleToggleItem = (itemId) => {
         setSelectedItemIds(prevSelected =>
             prevSelected.includes(itemId)
@@ -62,11 +61,9 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
     const handleItemUpdate = async (updatedItem) => {
         if (!isOwner) return;
         try {
-            await updateTemplateItem(templateId, updatedItem.id, updatedItem);
-            const fetchedItems = await getTemplateItems(templateId);
-            setItems(fetchedItems);
+            await updateItemMutation.mutateAsync({ itemId: updatedItem.id, itemData: updatedItem });
             setItemToEdit(null);
-            onUpdate({ ...comparison, items: fetchedItems });
+            // items will be automatically refetched by TanStack Query
         } catch (error) {
             alert('Failed to update item: ' + error.message);
         }
@@ -75,14 +72,9 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
     const handleAddItem = async (newItemData) => {
         if (!isOwner) return;
         try {
-            await addTemplateItem(templateId, newItemData);
-            const fetchedItems = await getTemplateItems(templateId);
-            setItems(fetchedItems);
-            if (fetchedItems.length > 0) {
-                setSelectedItemIds(prev => [...prev, fetchedItems[fetchedItems.length - 1].id]);
-            }
+            const newItemId = await addItemMutation.mutateAsync(newItemData);
+            setSelectedItemIds(prev => [...prev, newItemId]);
             setIsAddModalOpen(false);
-            onUpdate({ ...comparison, items: fetchedItems });
         } catch (error) {
             alert('Failed to add item: ' + error.message);
         }
@@ -91,11 +83,8 @@ const ComparisonView = ({ comparison, onUpdate, onBack, onEditTemplate }) => {
     const handleDeleteItem = async (templateId, itemId) => {
         if (!isOwner) return;
         try {
-            await deleteTemplateItem(templateId, itemId);
-            const fetchedItems = await getTemplateItems(templateId);
-            setItems(fetchedItems);
+            await deleteItemMutation.mutateAsync(itemId);
             setSelectedItemIds(prev => prev.filter(id => id !== itemId));
-            onUpdate({ ...comparison, items: fetchedItems });
         } catch (error) {
             alert('Failed to delete item: ' + error.message);
         }

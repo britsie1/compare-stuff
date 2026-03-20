@@ -1,11 +1,67 @@
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, query, orderBy, limit, startAfter, increment, where } from 'firebase/firestore';
+import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    doc, 
+    updateDoc, 
+    deleteDoc, 
+    getDoc, 
+    getDocs, 
+    query, 
+    orderBy, 
+    limit, 
+    startAfter, 
+    increment, 
+    where,
+    DocumentData,
+    QueryDocumentSnapshot,
+    DocumentReference
+} from 'firebase/firestore';
 import { app } from '../firebase';
 
 // Initialize Firestore
 const db = getFirestore(app);
 
+export interface TemplateField {
+    id?: string;
+    type: 'field' | 'section';
+    value: string;
+    fieldType?: 'text' | 'yes-no' | 'currency' | 'link' | 'imageUrl';
+}
+
+export interface Template {
+    id?: string;
+    templateId?: string; // Some parts of the app use this
+    title: string;
+    description?: string;
+    templateFields: TemplateField[];
+    lastUpdated: string;
+    creator: {
+        uid: string;
+        displayName: string;
+        email: string;
+        photoURL?: string;
+    };
+    contributors: string[];
+    status: 'unpublished' | 'private' | 'published';
+    favorites?: string[];
+    views?: number;
+}
+
+export interface ItemValue {
+    id: string;
+    value: any;
+    hint?: string;
+}
+
+export interface TemplateItem {
+    id?: string;
+    title: string;
+    values: ItemValue[];
+}
+
 // Helper to generate a unique id (uses crypto.randomUUID if available)
-function generateFieldId() {
+function generateFieldId(): string {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return crypto.randomUUID();
     }
@@ -13,17 +69,15 @@ function generateFieldId() {
 }
 
 // Function to create a template
-// NOTE: Make sure you pass the user object as the second argument when calling this function!
-export const createTemplate = async (templateData, user) => {
+export const createTemplate = async (templateData: Partial<Template>, user: any): Promise<Template> => {
     try {
         const now = new Date().toISOString();
-        // Debug: log user object
-        if (!user || !user.id) {
+        if (!user || (!user.id && !user.uid)) {
             console.error('createTemplate: user object received:', user);
             throw new Error('You must be logged in to create a template.');
         }
-        // Normalize templateFields to support both 'field' and 'section' types, and assign unique id to each field
-        const normalizedFields = (templateData.templateFields || []).map(f => {
+
+        const normalizedFields: TemplateField[] = (templateData.templateFields || []).map(f => {
             if (f.type === 'section') {
                 return {
                     type: 'section',
@@ -39,22 +93,24 @@ export const createTemplate = async (templateData, user) => {
             }
         }).filter(f => f.value !== '' || f.type === 'section');
 
-        const template = {
-            ...templateData,
+        const template: Omit<Template, 'id'> = {
+            title: templateData.title || 'Untitled Comparison',
+            description: templateData.description || '',
             templateFields: normalizedFields,
             lastUpdated: now,
             creator: {
-                uid: user.id,
-                displayName: user.name || user.email || 'Unknown User',
+                uid: user.id || user.uid,
+                displayName: user.name || user.displayName || user.email || 'Unknown User',
                 email: user.email || '',
                 photoURL: user.photoURL || ''
             },
             contributors: [],
             status: 'unpublished',
+            ...templateData,
         };
         const docRef = await addDoc(collection(db, 'templates'), template);
         console.log('Template created with ID:', docRef.id);
-        return { id: docRef.id, ...template };
+        return { id: docRef.id, ...template } as Template;
     } catch (error) {
         console.error('Error adding template:', error);
         throw error;
@@ -62,11 +118,10 @@ export const createTemplate = async (templateData, user) => {
 };
 
 // Function to update a template
-export const updateTemplate = async (templateId, updatedData) => {
+export const updateTemplate = async (templateId: string, updatedData: Partial<Template>): Promise<void> => {
     try {
         const templateRef = doc(db, 'templates', templateId);
-        // Normalize templateFields if present to support both 'field' and 'section' types, and assign unique id to each field
-        let dataToUpdate = { ...updatedData };
+        let dataToUpdate: any = { ...updatedData };
         if (Array.isArray(updatedData.templateFields)) {
             dataToUpdate.templateFields = updatedData.templateFields.map(f => {
                 if (f.type === 'section') {
@@ -93,7 +148,7 @@ export const updateTemplate = async (templateId, updatedData) => {
 };
 
 // Function to delete a template
-export const deleteTemplate = async (templateId) => {
+export const deleteTemplate = async (templateId: string): Promise<void> => {
     try {
         const templateRef = doc(db, 'templates', templateId);
         await deleteDoc(templateRef);
@@ -105,13 +160,13 @@ export const deleteTemplate = async (templateId) => {
 };
 
 // Function to get a specific template by ID
-export const getTemplate = async (templateId, userId = null) => {
+export const getTemplate = async (templateId: string, userId: string | null = null): Promise<Template> => {
     try {
         const templateRef = doc(db, 'templates', templateId);
         const docSnap = await getDoc(templateRef);
         if (docSnap.exists()) {
-            const template = { id: docSnap.id, ...docSnap.data() };
-            console.log(userId, template.creator?.uid, template.status);
+            const template = { id: docSnap.id, ...docSnap.data() } as Template;
+            
             if (template.status === 'published' || template.status === 'private') {
                 return template;
             }
@@ -132,17 +187,22 @@ export const getTemplate = async (templateId, userId = null) => {
     }
 };
 
+interface PaginatedTemplates {
+    templates: Template[];
+    lastVisible: QueryDocumentSnapshot<DocumentData> | null;
+}
+
 // Function to get a page of templates (paginated)
-export const getTemplates = async (pageSize = 10, lastVisible = null) => {
+export const getTemplates = async (pageSize: number = 10, lastVisible: QueryDocumentSnapshot<DocumentData> | null = null): Promise<PaginatedTemplates> => {
     try {
         let q = query(collection(db, 'templates'), where('status', '==', 'published'), orderBy('title'), limit(pageSize));
         if (lastVisible) {
             q = query(collection(db, 'templates'), where('status', '==', 'published'), orderBy('title'), startAfter(lastVisible), limit(pageSize));
         }
         const querySnapshot = await getDocs(q);
-        const templates = [];
+        const templates: Template[] = [];
         querySnapshot.forEach((doc) => {
-            templates.push({ id: doc.id, ...doc.data() });
+            templates.push({ id: doc.id, ...doc.data() } as Template);
         });
         const newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
         return { templates, lastVisible: newLastVisible };
@@ -153,16 +213,16 @@ export const getTemplates = async (pageSize = 10, lastVisible = null) => {
 };
 
 // Function to get all templates for a specific user
-export const getUserTemplates = async (userId) => {
+export const getUserTemplates = async (userId: string): Promise<Template[]> => {
     try {
         if (!userId) {
             throw new Error('User ID is required to fetch user templates.');
         }
         const q = query(collection(db, 'templates'), where('creator.uid', '==', userId), orderBy('title'));
         const querySnapshot = await getDocs(q);
-        const templates = [];
+        const templates: Template[] = [];
         querySnapshot.forEach((doc) => {
-            templates.push({ id: doc.id, ...doc.data() });
+            templates.push({ id: doc.id, ...doc.data() } as Template);
         });
         return templates;
     } catch (error) {
@@ -172,11 +232,8 @@ export const getUserTemplates = async (userId) => {
 };
 
 // Function to set the publication status of a template
-export const setTemplateStatus = async (templateId, status) => {
+export const setTemplateStatus = async (templateId: string, status: 'unpublished' | 'private' | 'published'): Promise<void> => {
     try {
-        if (!['unpublished', 'private', 'published'].includes(status)) {
-            throw new Error('Invalid status. Must be one of: unpublished, private, published.');
-        }
         const templateRef = doc(db, 'templates', templateId);
         await updateDoc(templateRef, { status });
         console.log(`Template ${templateId} status updated to ${status}`);
@@ -187,11 +244,11 @@ export const setTemplateStatus = async (templateId, status) => {
 };
 
 // Helper to deeply remove undefined values from an object/array
-function removeUndefinedDeep(obj) {
+function removeUndefinedDeep(obj: any): any {
     if (Array.isArray(obj)) {
         return obj.map(removeUndefinedDeep);
     } else if (obj && typeof obj === 'object') {
-        const result = {};
+        const result: any = {};
         Object.entries(obj).forEach(([k, v]) => {
             if (v !== undefined) {
                 result[k] = removeUndefinedDeep(v);
@@ -203,27 +260,22 @@ function removeUndefinedDeep(obj) {
 }
 
 // Function to add a new item to a template
-export const addTemplateItem = async (templateId, itemData) => {
+export const addTemplateItem = async (templateId: string, itemData: Partial<TemplateItem>): Promise<string> => {
     try {
-        // Sanitize itemData.values before saving
-        let sanitizedValues = [];
+        let sanitizedValues: ItemValue[] = [];
         if (Array.isArray(itemData.values)) {
             sanitizedValues = itemData.values.map(v => {
-                // Support hint property
                 const hint = v.hint !== undefined ? v.hint : '';
                 if (v && typeof v.value === 'object' && v.value !== null && ('text' in v.value || 'url' in v.value)) {
-                    // For link fields, if both text and url are empty, store empty string
                     const text = v.value.text || '';
                     const url = v.value.url || '';
                     if (!text && !url) return { id: v.id, value: '', hint };
                     return { id: v.id, value: { text, url }, hint };
                 } else {
-                    // For all other fields, never store undefined
                     return { id: v.id, value: v.value !== undefined ? v.value : '', hint };
                 }
             });
         }
-        // Remove undefined from all of itemData
         const cleanItemData = removeUndefinedDeep({ ...itemData, values: sanitizedValues });
         const itemsCollection = collection(db, 'templates', templateId, 'items');
         const docRef = await addDoc(itemsCollection, cleanItemData);
@@ -236,10 +288,10 @@ export const addTemplateItem = async (templateId, itemData) => {
 };
 
 // Function to update a single item in a template's items subcollection
-export const updateTemplateItem = async (templateId, itemId, itemData) => {
+export const updateTemplateItem = async (templateId: string, itemId: string, itemData: Partial<TemplateItem>): Promise<boolean> => {
     try {
         const itemRef = doc(db, 'templates', templateId, 'items', itemId);
-        await updateDoc(itemRef, itemData);
+        await updateDoc(itemRef, itemData as DocumentData);
         return true;
     } catch (error) {
         console.error('Error updating template item:', error);
@@ -248,23 +300,21 @@ export const updateTemplateItem = async (templateId, itemId, itemData) => {
 };
 
 // Function to get all items for a specific template
-export const getTemplateItems = async (templateId) => {
+export const getTemplateItems = async (templateId: string): Promise<TemplateItem[]> => {
     try {
         const itemsCollection = collection(db, 'templates', templateId, 'items');
         const querySnapshot = await getDocs(itemsCollection);
-        const items = [];
+        const items: TemplateItem[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
-            // Ensure each value object in values[] includes the hint property (even if empty)
             let values = Array.isArray(data.values)
                 ? data.values.map(v => ({
                     ...v,
                     hint: v && typeof v === 'object' && 'hint' in v ? v.hint : ''
                 }))
                 : [];
-            items.push({ id: doc.id, ...data, values });
+            items.push({ id: doc.id, ...data, values } as TemplateItem);
         });
-        console.log('Items retrieved for template:', templateId, items);
         return items;
     } catch (error) {
         console.error('Error getting items for template:', error);
@@ -272,7 +322,7 @@ export const getTemplateItems = async (templateId) => {
     }
 };
 
-export const favoriteTemplate = async (templateId, userId) => {
+export const favoriteTemplate = async (templateId: string, userId: string): Promise<void> => {
     try {
         const templateRef = doc(db, 'templates', templateId);
         const templateDoc = await getDoc(templateRef);
@@ -280,15 +330,12 @@ export const favoriteTemplate = async (templateId, userId) => {
             throw new Error('Template not found');
         }
         
-        const templateData = templateDoc.data();
+        const templateData = templateDoc.data() as Template;
         const favorites = templateData.favorites || [];
         
         if (!favorites.includes(userId)) {
             favorites.push(userId);
             await updateDoc(templateRef, { favorites });
-            console.log('Template favorited:', templateId);
-        } else {
-            console.log('Template already favorited by this user:', templateId);
         }
     } catch (error) {
         console.error('Error favoriting template:', error);
@@ -296,7 +343,7 @@ export const favoriteTemplate = async (templateId, userId) => {
     }
 }
 
-export const unfavoriteTemplate = async (templateId, userId) => {
+export const unfavoriteTemplate = async (templateId: string, userId: string): Promise<void> => {
     try {
         const templateRef = doc(db, 'templates', templateId);
         const templateDoc = await getDoc(templateRef);
@@ -304,15 +351,12 @@ export const unfavoriteTemplate = async (templateId, userId) => {
             throw new Error('Template not found');
         }
         
-        const templateData = templateDoc.data();
+        const templateData = templateDoc.data() as Template;
         const favorites = templateData.favorites || [];
         
         if (favorites.includes(userId)) {
             const updatedFavorites = favorites.filter(id => id !== userId);
             await updateDoc(templateRef, { favorites: updatedFavorites });
-            console.log('Template unfavorited:', templateId);
-        } else {
-            console.log('Template was not favorited by this user:', templateId);
         }
     } catch (error) {
         console.error('Error unfavoriting template:', error);
@@ -320,18 +364,17 @@ export const unfavoriteTemplate = async (templateId, userId) => {
     }
 }
 
-export const deleteTemplateItem = async (templateId, itemId) => {
+export const deleteTemplateItem = async (templateId: string, itemId: string): Promise<void> => {
     try {
         const itemRef = doc(db, 'templates', templateId, 'items', itemId);
         await deleteDoc(itemRef);
-        console.log('Item deleted from template:', templateId, 'item:', itemId);
     } catch (error) {
         console.error('Error deleting item from template:', error);
         throw error;
     }
 };
 
-export const incrementTemplateView = async (templateId) => {
+export const incrementTemplateView = async (templateId: string): Promise<void> => {
     try {
         const templateRef = doc(db, 'templates', templateId);
         await updateDoc(templateRef, {

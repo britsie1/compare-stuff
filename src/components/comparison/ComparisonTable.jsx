@@ -145,7 +145,7 @@ const ComparisonTable = ({ comparison, itemsToDisplay, onHint, collapsedSections
 
     return (
         <>
-            <div id="sticky-header-placeholder" className="sticky top-0 z-100 visibility-hidden diplay-none"></div>
+            <div id="sticky-header-placeholder" className="sticky top-0 z-40 bg-white dark:bg-slate-800" style={{ visibility: 'hidden', display: 'none' }}></div>
             <div id="table-container" className="table-container overflow-x-auto bg-white dark:bg-slate-800 rounded-lg shadow-lg mb-8 dark:border dark:border-slate-700">
                 {itemsToDisplay.length > 0 ? (
                     <table id="main-table" className="w-full">
