@@ -181,10 +181,10 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
                 {itemsToDisplay.length > 0 ? (
                     <table id="main-table" className="w-full">
                         <thead className="md:sticky md:top-0 z-30">
-                            <tr className="bg-slate-100 dark:bg-slate-700 transition-colors">
+                            <tr className="bg-slate-100 dark:bg-slate-700 transition-colors flex md:table-row">
                                 <th className="hidden md:table-cell p-4 font-bold text-slate-700 dark:text-slate-200 text-left w-1/3 md:w-1/4 lg:w-1/5 sticky left-0 bg-slate-100 dark:bg-slate-700 z-30">Feature</th>
                                 {itemsToDisplay.map(item => (
-                                    <th key={item.id} className="p-4 font-bold text-indigo-700 dark:text-indigo-400 text-center w-48 md:w-56 flex-shrink-0 bg-slate-100 dark:bg-slate-700">{item.title}</th>
+                                    <th key={item.id} className="p-4 font-bold text-indigo-700 dark:text-indigo-400 text-center w-48 md:w-56 flex-shrink-0 bg-slate-100 dark:bg-slate-700 md:table-cell">{item.title}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -195,14 +195,14 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
                                         const isCollapsed = collapsedSections[fieldIndex];
                                         return (
                                             <tr key={`section-${fieldIndex}`} className="bg-slate-200 dark:bg-slate-800/80 h-11 transition-colors border-t border-slate-300 dark:border-slate-700 block md:table-row">
-                                                <td colSpan={itemsToDisplay.length + 1} className="p-2 font-bold text-slate-700 dark:text-slate-200 text-center cursor-pointer select-none group w-full md:table-cell" style={{ alignContent: 'start' }} onClick={() => onToggleSection(fieldIndex)}>
-                                                    <span className="inline-flex items-center gap-2 left-1/2 transform -translate-x-1/2" style={{ position: 'absolute', whiteSpace: 'nowrap' }}>
+                                                <td colSpan={itemsToDisplay.length + 1} className="p-2 font-bold text-slate-700 dark:text-slate-200 text-center cursor-pointer select-none group w-full md:table-cell sticky left-0 md:static" style={{ alignContent: 'start' }} onClick={() => onToggleSection(fieldIndex)}>
+                                                    <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                                                         <span className="transition-transform duration-200" style={{ display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
                                                             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block align-middle"><path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                                         </span>
                                                         {field.value}
                                                         <span className="text-xs text-slate-500 dark:text-slate-400 ml-2 group-hover:underline">{isCollapsed ? '(Click to Expand)' : ''}</span>
-                                                    </span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
@@ -222,10 +222,10 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
 
                                     return (
                                         <tr key={`field-${fieldId}`} className="flex flex-col md:table-row border-t border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                            <th className="h-10 md:h-auto py-2 px-4 font-semibold text-slate-600 dark:text-slate-300 md:sticky md:left-0 bg-slate-50 dark:bg-slate-800 md:bg-transparent z-10 text-center md:text-left md:table-cell w-full md:w-auto" colSpan={1}>
-                                                <span className="md:static md:transform-none md:left-auto absolute left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                                            <th className="h-10 md:h-auto py-2 px-4 font-semibold text-slate-600 dark:text-slate-300 sticky left-0 bg-slate-50 dark:bg-slate-800 md:bg-transparent z-10 md:text-left md:table-cell w-full md:w-auto" colSpan={1}>
+                                                <div className="flex items-center justify-center md:justify-start whitespace-nowrap">
                                                     {fieldLabel}
-                                                </span>
+                                                </div>
                                             </th>
                                             <td className="flex md:contents">
                                                 {itemsToDisplay.map(item => {
