@@ -65,108 +65,113 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
 
         // Update viewport width variable for centering logic on mobile
         const updateViewportWidth = () => {
-            const width = tableContainer.clientWidth;
-            tableContainer.style.setProperty('--viewport-width', `${width}px`);
+            if (window.innerWidth < 768) {
+                const width = tableContainer.clientWidth;
+                tableContainer.style.setProperty('--viewport-width', `${width}px`);
+            } else {
+                tableContainer.style.setProperty('--viewport-width', 'auto');
+            }
         };
         const viewportRo = new ResizeObserver(updateViewportWidth);
         viewportRo.observe(tableContainer);
+        window.addEventListener('resize', updateViewportWidth);
         updateViewportWidth();
 
-        // Only apply custom sticky header on desktop (md and up)
-        if (window.innerWidth < 768) {
-            return () => viewportRo.disconnect();
-        }
+        // Custom sticky header logic for desktop (md and up)
+        const initStickyHeader = () => {
+            if (window.innerWidth < 768) return null;
 
-        const mainTable = document.getElementById('main-table') as HTMLTableElement | null;
-        const stickyHeaderPlaceholder = document.getElementById('sticky-header-placeholder') as HTMLDivElement | null;
-        const originalThead = mainTable?.querySelector('thead') as HTMLTableSectionElement | null;
+            const mainTable = document.getElementById('main-table') as HTMLTableElement | null;
+            const stickyHeaderPlaceholder = document.getElementById('sticky-header-placeholder') as HTMLDivElement | null;
+            const originalThead = mainTable?.querySelector('thead') as HTMLTableSectionElement | null;
 
-        if (!mainTable || !stickyHeaderPlaceholder || !originalThead) {
-            return () => viewportRo.disconnect();
-        }
+            if (!mainTable || !stickyHeaderPlaceholder || !originalThead) return null;
 
-        let isOriginalTheadOnScreen = true;
-        let isTableContainerOnScreen = true;
+            let isOriginalTheadOnScreen = true;
+            let isTableContainerOnScreen = true;
 
-        const headerContainer = document.createElement('div');
-        headerContainer.classList.add('header-container');
-        headerContainer.style.position = 'relative';
-        headerContainer.style.overflow = 'hidden';
-        const clonedTable = document.createElement('table');
-        clonedTable.className = mainTable.className;
-        const clonedThead = originalThead.cloneNode(true) as HTMLTableSectionElement;
+            const headerContainer = document.createElement('div');
+            headerContainer.classList.add('header-container');
+            headerContainer.style.position = 'relative';
+            headerContainer.style.overflow = 'hidden';
+            const clonedTable = document.createElement('table');
+            clonedTable.className = mainTable.className;
+            const clonedThead = originalThead.cloneNode(true) as HTMLTableSectionElement;
 
-        clonedTable.appendChild(clonedThead);
-        headerContainer.appendChild(clonedTable);
-        stickyHeaderPlaceholder.appendChild(headerContainer);
+            clonedTable.appendChild(clonedThead);
+            headerContainer.appendChild(clonedTable);
+            stickyHeaderPlaceholder.appendChild(headerContainer);
 
-        const updateStickyHeaderVisibility = () => {
-            if (!isOriginalTheadOnScreen && isTableContainerOnScreen) {
-                stickyHeaderPlaceholder.style.visibility = 'visible';
-                stickyHeaderPlaceholder.style.display = 'block';
-                handleScroll();
-            } else {
-                stickyHeaderPlaceholder.style.visibility = 'hidden';
-                stickyHeaderPlaceholder.style.display = 'none';
-            }
-        };
-
-        const theadObserver = new IntersectionObserver(
-            ([entry]) => {
-                isOriginalTheadOnScreen = entry.isIntersecting;
-                updateStickyHeaderVisibility();
-            },
-            { threshold: [0] }
-        );
-        theadObserver.observe(originalThead);
-
-        const tableContainerObserver = new IntersectionObserver(
-            ([entry]) => {
-                isTableContainerOnScreen = entry.isIntersecting;
-                updateStickyHeaderVisibility();
-            },
-            {
-                rootMargin: "0px 0px -100% 0px",
-                threshold: [0]
-            }
-        );
-        tableContainerObserver.observe(tableContainer);
-
-        const syncWidths = () => {
-            const originalThs = originalThead.querySelectorAll('th');
-            const clonedThs = clonedThead.querySelectorAll('th');
-            originalThs.forEach((th, i) => {
-                const width = th.getBoundingClientRect().width;
-                if (clonedThs[i]) {
-                    clonedThs[i].style.width = `${width}px`;
-                    clonedThs[i].style.minWidth = `${width}px`;
-                    clonedThs[i].style.maxWidth = `${width}px`;
+            const updateStickyHeaderVisibility = () => {
+                if (!isOriginalTheadOnScreen && isTableContainerOnScreen) {
+                    stickyHeaderPlaceholder.style.visibility = 'visible';
+                    stickyHeaderPlaceholder.style.display = 'block';
+                    headerContainer.scrollLeft = tableContainer.scrollLeft;
+                } else {
+                    stickyHeaderPlaceholder.style.visibility = 'hidden';
+                    stickyHeaderPlaceholder.style.display = 'none';
                 }
-            });
-            clonedTable.style.width = `${mainTable.offsetWidth}px`;
+            };
+
+            const theadObs = new IntersectionObserver(
+                ([entry]) => {
+                    isOriginalTheadOnScreen = entry.isIntersecting;
+                    updateStickyHeaderVisibility();
+                },
+                { threshold: [0] }
+            );
+            theadObs.observe(originalThead);
+
+            const containerObs = new IntersectionObserver(
+                ([entry]) => {
+                    isTableContainerOnScreen = entry.isIntersecting;
+                    updateStickyHeaderVisibility();
+                },
+                {
+                    rootMargin: "0px 0px -100% 0px",
+                    threshold: [0]
+                }
+            );
+            containerObs.observe(tableContainer);
+
+            const syncWidths = () => {
+                const originalThs = originalThead.querySelectorAll('th');
+                const clonedThs = clonedThead.querySelectorAll('th');
+                originalThs.forEach((th, i) => {
+                    const width = th.getBoundingClientRect().width;
+                    if (clonedThs[i]) {
+                        clonedThs[i].style.width = `${width}px`;
+                        clonedThs[i].style.minWidth = `${width}px`;
+                        clonedThs[i].style.maxWidth = `${width}px`;
+                    }
+                });
+                clonedTable.style.width = `${mainTable.offsetWidth}px`;
+            };
+
+            const handleScroll = () => {
+                headerContainer.scrollLeft = tableContainer.scrollLeft;
+            };
+
+            tableContainer.addEventListener('scroll', handleScroll);
+            const resizeObs = new ResizeObserver(syncWidths);
+            resizeObs.observe(mainTable);
+            syncWidths();
+
+            return () => {
+                theadObs.disconnect();
+                containerObs.disconnect();
+                resizeObs.disconnect();
+                tableContainer.removeEventListener('scroll', handleScroll);
+                stickyHeaderPlaceholder.innerHTML = '';
+            };
         };
 
-        const handleScroll = () => {
-            headerContainer.scrollLeft = tableContainer.scrollLeft;
-        };
-
-        tableContainer.addEventListener('scroll', handleScroll);
-
-        const resizeObserver = new ResizeObserver(syncWidths);
-        resizeObserver.observe(mainTable);
-        syncWidths();
+        const stickyCleanup = initStickyHeader();
 
         return () => {
             viewportRo.disconnect();
-            theadObserver.disconnect();
-            tableContainerObserver.disconnect();
-            resizeObserver.disconnect();
-            if (tableContainer) {
-                tableContainer.removeEventListener('scroll', handleScroll);
-            }
-            if (stickyHeaderPlaceholder) {
-                stickyHeaderPlaceholder.innerHTML = '';
-            }
+            window.removeEventListener('resize', updateViewportWidth);
+            if (stickyCleanup) stickyCleanup();
         };
     }, [itemsToDisplay]);
 
@@ -195,8 +200,8 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
             <div id="sticky-header-placeholder" className="sticky top-0 z-40 bg-white dark:bg-slate-800" style={{ visibility: 'hidden', display: 'none' }}></div>
             <div id="table-container" className="table-container overflow-x-auto bg-white dark:bg-slate-800 rounded-lg shadow-lg mb-8 dark:border dark:border-slate-700">
                 {itemsToDisplay.length > 0 ? (
-                    <table id="main-table" className="w-full">
-                        <thead className="md:sticky md:top-0 z-30">
+                    <table id="main-table" className="w-full border-collapse">
+                        <thead className="md:table-header-group">
                             <tr className="bg-slate-100 dark:bg-slate-700 transition-colors flex md:table-row">
                                 <th className="hidden md:table-cell p-4 font-bold text-slate-700 dark:text-slate-200 text-left w-1/3 md:w-1/4 lg:w-1/5 sticky left-0 bg-slate-100 dark:bg-slate-700 z-30">Feature</th>
                                 {itemsToDisplay.map(item => (
@@ -204,7 +209,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
                                 ))}
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="md:table-row-group">
                             {(() => {
                                 return comparison.templateFields.map((field, fieldIndex, arr) => {
                                     if (field.type === 'section') {
@@ -212,7 +217,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
                                         return (
                                             <tr key={`section-${fieldIndex}`} className="bg-slate-200 dark:bg-slate-800/80 h-11 transition-colors border-t border-slate-300 dark:border-slate-700 block md:table-row">
                                                 <td colSpan={itemsToDisplay.length + 1} className="p-0 font-bold text-slate-700 dark:text-slate-200 cursor-pointer select-none group w-full block md:table-cell md:static bg-inherit z-20" onClick={() => onToggleSection(fieldIndex)}>
-                                                    <div className="md:static sticky left-0 flex items-center justify-center gap-2 whitespace-nowrap h-11 bg-inherit px-2" style={{ width: 'var(--viewport-width, 100%)' }}>
+                                                    <div className="md:static sticky left-0 flex items-center justify-center gap-2 whitespace-nowrap h-11 bg-inherit px-2" style={{ width: 'var(--viewport-width, auto)' }}>
                                                         <span className="transition-transform duration-200" style={{ display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
                                                             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block align-middle"><path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                                         </span>
@@ -239,7 +244,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
                                     return (
                                         <tr key={`field-${fieldId}`} className="flex flex-wrap md:table-row border-t border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                                             <th className="h-10 md:h-auto p-0 font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 md:bg-transparent z-10 md:text-left md:table-cell w-full md:w-auto" colSpan={1}>
-                                                <div className="md:static sticky left-0 flex items-center justify-center md:justify-start whitespace-nowrap h-10 bg-inherit md:bg-transparent px-4" style={{ width: 'var(--viewport-width, 100%)' }}>
+                                                <div className="md:static sticky left-0 flex items-center justify-center md:justify-start whitespace-nowrap h-10 bg-inherit md:bg-transparent px-4" style={{ width: 'var(--viewport-width, auto)' }}>
                                                     {fieldLabel}
                                                 </div>
                                             </th>
