@@ -211,7 +211,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
                                         const isCollapsed = collapsedSections[fieldIndex];
                                         return (
                                             <tr key={`section-${fieldIndex}`} className="bg-slate-200 dark:bg-slate-800/80 h-11 transition-colors border-t border-slate-300 dark:border-slate-700 block md:table-row">
-                                                <td colSpan={itemsToDisplay.length + 1} className="block md:table-cell sticky left-0 md:static p-0 font-bold text-slate-700 dark:text-slate-200 cursor-pointer select-none group w-full bg-inherit z-20" onClick={() => onToggleSection(fieldIndex)}>
+                                                <td colSpan={itemsToDisplay.length + 1} className="p-0 font-bold text-slate-700 dark:text-slate-200 cursor-pointer select-none group w-full block md:table-cell md:static bg-inherit z-20" onClick={() => onToggleSection(fieldIndex)}>
                                                     <div className="md:static sticky left-0 flex items-center justify-center gap-2 whitespace-nowrap h-11 bg-inherit px-2" style={{ width: 'var(--viewport-width, 100%)' }}>
                                                         <span className="transition-transform duration-200" style={{ display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
                                                             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block align-middle"><path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -237,58 +237,56 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
                                     const fieldLabel = typeof field === 'object' ? field.value : field;
 
                                     return (
-                                        <tr key={`field-${fieldId}`} className="flex flex-col md:table-row border-t border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                        <tr key={`field-${fieldId}`} className="flex flex-wrap md:table-row border-t border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                                             <th className="h-10 md:h-auto p-0 font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 md:bg-transparent z-10 md:text-left md:table-cell w-full md:w-auto" colSpan={1}>
                                                 <div className="md:static sticky left-0 flex items-center justify-center md:justify-start whitespace-nowrap h-10 bg-inherit md:bg-transparent px-4" style={{ width: 'var(--viewport-width, 100%)' }}>
                                                     {fieldLabel}
                                                 </div>
                                             </th>
-                                            <td className="flex md:contents">
-                                                {itemsToDisplay.map(item => {
-                                                    const valueObj = Array.isArray(item.values)
-                                                        ? item.values.find(v => v.id === fieldId)
-                                                        : null;
-                                                    const value = valueObj ? valueObj.value : '-';
-                                                    const cellKey = `${item.id}-${fieldId}`;
-                                                    const hint = valueObj && typeof valueObj.hint === 'string' && valueObj.hint.trim() ? valueObj.hint : null;
+                                            {itemsToDisplay.map(item => {
+                                                const valueObj = Array.isArray(item.values)
+                                                    ? item.values.find(v => v.id === fieldId)
+                                                    : null;
+                                                const value = valueObj ? valueObj.value : '-';
+                                                const cellKey = `${item.id}-${fieldId}`;
+                                                const hint = valueObj && typeof valueObj.hint === 'string' && valueObj.hint.trim() ? valueObj.hint : null;
 
-                                                    let content;
-                                                    switch (field.fieldType) {
-                                                        case 'yes-no':
-                                                            content = renderValueWithHint(value === 'Yes' ? <CheckSquare className="h-5 w-5 text-green-500 mx-auto" /> : <X className="h-5 w-5 text-red-500 mx-auto" />, hint, cellKey);
-                                                            break;
-                                                        case 'currency':
-                                                            content = renderValueWithHint(`$${value}`, hint, cellKey);
-                                                            break;
-                                                        case 'link': {
-                                                            if (value && typeof value === 'object' && (value as any).text && (value as any).url) {
-                                                                content = renderValueWithHint(<a href={(value as any).url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">{(value as any).text}</a>, hint, cellKey);
-                                                            } else if (value && typeof value === 'object' && (value as any).url) {
-                                                                content = renderValueWithHint(<a href={(value as any).url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">{(value as any).url}</a>, hint, cellKey);
-                                                            } else if (value && typeof value === 'object' && (value as any).text) {
-                                                                content = renderValueWithHint((value as any).text, hint, cellKey);
-                                                            } else if (typeof value === 'string' && value) {
-                                                                content = renderValueWithHint(value, hint, cellKey);
-                                                            } else {
-                                                                content = <span className="text-slate-400 dark:text-slate-500">-</span>;
-                                                            }
-                                                            break;
+                                                let content;
+                                                switch (field.fieldType) {
+                                                    case 'yes-no':
+                                                        content = renderValueWithHint(value === 'Yes' ? <CheckSquare className="h-5 w-5 text-green-500 mx-auto" /> : <X className="h-5 w-5 text-red-500 mx-auto" />, hint, cellKey);
+                                                        break;
+                                                    case 'currency':
+                                                        content = renderValueWithHint(`$${value}`, hint, cellKey);
+                                                        break;
+                                                    case 'link': {
+                                                        if (value && typeof value === 'object' && (value as any).text && (value as any).url) {
+                                                            content = renderValueWithHint(<a href={(value as any).url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">{(value as any).text}</a>, hint, cellKey);
+                                                        } else if (value && typeof value === 'object' && (value as any).url) {
+                                                            content = renderValueWithHint(<a href={(value as any).url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">{(value as any).url}</a>, hint, cellKey);
+                                                        } else if (value && typeof value === 'object' && (value as any).text) {
+                                                            content = renderValueWithHint((value as any).text, hint, cellKey);
+                                                        } else if (typeof value === 'string' && value) {
+                                                            content = renderValueWithHint(value, hint, cellKey);
+                                                        } else {
+                                                            content = <span className="text-slate-400 dark:text-slate-500">-</span>;
                                                         }
-                                                        case 'imageUrl':
-                                                            content = renderValueWithHint(value ? <img src={value as string} alt={fieldLabel} className=" object-cover mx-auto rounded" /> : <span className="text-slate-400 dark:text-slate-500">-</span>, hint, cellKey);
-                                                            break;
-                                                        default:
-                                                            content = renderValueWithHint(value as React.ReactNode, hint, cellKey);
+                                                        break;
                                                     }
+                                                    case 'imageUrl':
+                                                        content = renderValueWithHint(value ? <img src={value as string} alt={fieldLabel} className=" object-cover mx-auto rounded" /> : <span className="text-slate-400 dark:text-slate-500">-</span>, hint, cellKey);
+                                                        break;
+                                                    default:
+                                                        content = renderValueWithHint(value as React.ReactNode, hint, cellKey);
+                                                }
 
-                                                    return (
-                                                        <td key={cellKey} className="p-4 text-center text-slate-800 dark:text-slate-200 flex-shrink-0 w-48 md:w-56 md:table-cell">
-                                                            <span className="md:hidden text-xs text-slate-400 dark:text-slate-500 mb-1 block">{item.title}</span>
-                                                            {content}
-                                                        </td>
-                                                    );
-                                                })}
-                                            </td>
+                                                return (
+                                                    <td key={cellKey} className="p-4 text-center text-slate-800 dark:text-slate-200 flex-shrink-0 w-48 md:w-56 md:table-cell">
+                                                        <span className="md:hidden text-xs text-slate-400 dark:text-slate-500 mb-1 block">{item.title}</span>
+                                                        {content}
+                                                    </td>
+                                                );
+                                            })}
                                         </tr>
                                     );
                                 });
